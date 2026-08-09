@@ -1,0 +1,51 @@
+# Frozen build decisions from the Stage 1 checklist
+# Do not change silently — update via explicit project decision.
+
+stage_completed:
+  - 1_agent_contract
+  - 2_project_setup
+stage_current: 2_project_setup_awaiting_approval
+
+project:
+  name: Trading_Agent
+  path: "C:\\Users\\shiva\\OneDrive\\Desktop\\Trading Agent"
+  github: "https://github.com/SHIVAMCHAUHAN000/Trading_Agent.git"
+  python: "3.11"
+
+agent:
+  name: Indian Market Strategy Research & Backtesting Agent
+  trade_execution: false
+  long_only_v1: true
+
+data:
+  source: yfinance
+  ticker_suffix: ".NS"
+  universe_v1: NIFTY50
+  history_start: "2015-01-01"
+  adjusted_close: true
+  corporate_actions: true
+  benchmark: NIFTY50
+  # yfinance NIFTY 50 index symbol commonly used:
+  benchmark_yahoo_symbol: "^NSEI"
+
+storage:
+  database: supabase_postgres
+  local_docker_postgres: false
+  parquet_cache: true  # local research cache alongside Supabase
+  # SUPABASE_DB_URL / keys: provided later via .env (never commit)
+
+research_defaults:
+  capital_inr: 1000000  # PLACEHOLDER — confirm actual number
+  capital_status: placeholder
+  is_oos_split: "70/30"
+  walk_forward: true
+  costs: indian_cash_equity_conservative_defaults
+
+orchestration:
+  hermes: later
+
+notes:
+  - Stage 1 contract APPROVED
+  - Supabase credentials pending
+  - Real starting capital pending confirmation
+  - Hermes deferred until quant lab works

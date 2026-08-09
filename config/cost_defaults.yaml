@@ -1,0 +1,21 @@
+# Conservative Indian cash-equity cost defaults (V1 placeholder)
+# Used until a broker-specific schedule is provided.
+# Units: bps = basis points (1 bps = 0.01%)
+
+cost_model_id: indian_cash_equity_conservative_v1
+market: Indian_equities
+side: long_only_delivery_style
+
+# Round-trip oriented research defaults (intentionally conservative)
+brokerage_bps: 3.0          # per side, approximate discount-broker delivery/turnover blend
+stt_bps: 10.0               # approximate delivery STT on sell (research simplification)
+exchange_charges_bps: 0.35  # exchange + clearing ballpark per side
+gst_on_charges_pct: 18.0    # GST on brokerage + exchange charges
+stamp_duty_bps: 1.5         # buy-side ballpark (state-dependent; research simplification)
+slippage_bps: 5.0           # per side
+spread_bps: 5.0             # per side half-spread proxy
+
+notes:
+  - These are research defaults, not legal/tax advice.
+  - Validation engine will stress 1.5x / 2x / 3x these costs.
+  - Replace with broker schedule when available.

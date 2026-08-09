@@ -1,0 +1,18 @@
+# Runtime dependencies (Python 3.11)
+# Prefer: pip install -e ".[dev]"
+
+pandas>=2.1
+numpy>=1.26
+pyarrow>=14
+yfinance>=0.2.40
+pydantic>=2.6
+pyyaml>=6.0
+python-dotenv>=1.0
+sqlalchemy>=2.0
+psycopg[binary]>=3.1
+scipy>=1.11
+statsmodels>=0.14
+
+# Dev
+pytest>=8.0
+ruff>=0.3

@@ -1,0 +1,185 @@
+# Strategy Research Report — machine-readable output contract
+# Version: 0.1.0
+# Companion to: docs/AGENT_CONTRACT.md
+
+$schema_name: StrategyResearchReport
+version: "0.1.0"
+
+required:
+  - experiment_id
+  - strategy_name
+  - request_snapshot
+  - simple_report
+  - technical_report
+  - artifacts
+  - warnings
+  - conclusion
+
+properties:
+  experiment_id:
+    type: string
+    pattern: "^EXP-[0-9]{6,}$"
+    description: Immutable experiment registry ID
+
+  strategy_name:
+    type: string
+
+  request_snapshot:
+    type: object
+    description: Exact StrategyResearchRequest used for this run
+
+  data_version:
+    type: string
+  code_version:
+    type: string
+  created_at:
+    type: string
+    format: date-time
+
+  simple_report:
+    type: object
+    required:
+      - what_is_the_strategy
+      - why_might_it_work
+      - how_did_it_perform
+      - how_risky_is_it
+      - what_breaks_it
+      - is_result_robust
+      - major_warnings
+      - research_conclusion_summary
+    properties:
+      what_is_the_strategy:
+        type: string
+      why_might_it_work:
+        type: string
+      how_did_it_perform:
+        type: string
+      how_risky_is_it:
+        type: string
+      what_breaks_it:
+        type: string
+      is_result_robust:
+        type: string
+      major_warnings:
+        type: array
+        items:
+          type: string
+      research_conclusion_summary:
+        type: string
+
+  technical_report:
+    type: object
+    required:
+      - strategy_explanation
+      - data_quality
+      - backtest_results
+      - trade_statistics
+      - risk_statistics
+      - benchmark_comparison
+      - out_of_sample
+      - walk_forward
+      - parameter_sensitivity
+      - cost_sensitivity
+      - regime_analysis
+      - monte_carlo
+      - bootstrap
+      - stress_tests
+      - bias_checks
+      - overfitting_assessment
+      - research_conclusion
+    properties:
+      strategy_explanation:
+        type: object
+      data_quality:
+        type: object
+      backtest_results:
+        type: object
+      trade_statistics:
+        type: object
+        description: Includes win_rate, profit_factor, expectancy, holding stats
+      risk_statistics:
+        type: object
+      benchmark_comparison:
+        type: object
+      out_of_sample:
+        type: object
+      walk_forward:
+        type: object
+      parameter_sensitivity:
+        type: object
+      cost_sensitivity:
+        type: object
+      regime_analysis:
+        type: object
+      monte_carlo:
+        type: object
+      bootstrap:
+        type: object
+      stress_tests:
+        type: object
+      bias_checks:
+        type: object
+      overfitting_assessment:
+        type: object
+      research_conclusion:
+        type: object
+
+  artifacts:
+    type: object
+    required:
+      - equity_curve_ref
+      - trade_log_ref
+      - metrics_table_ref
+      - assumptions_log
+    properties:
+      equity_curve_ref:
+        type: string
+      trade_log_ref:
+        type: string
+      metrics_table_ref:
+        type: string
+      assumptions_log:
+        type: array
+        items:
+          type: string
+
+  warnings:
+    type: array
+    items:
+      type: object
+      required: [code, message, severity]
+      properties:
+        code:
+          type: string
+        message:
+          type: string
+        severity:
+          type: string
+          enum: [info, warning, critical]
+
+  conclusion:
+    type: object
+    required: [status, rationale]
+    properties:
+      status:
+        type: string
+        enum:
+          - REJECT
+          - INCONCLUSIVE
+          - PROMISING
+          - VALIDATED_CANDIDATE
+      rationale:
+        type: string
+      meets_soft_targets:
+        type: object
+        description: Explicit pass/fail vs research_objective (e.g. win_rate >= 0.70)
+        additionalProperties: true
+      next_tests:
+        type: array
+        items:
+          type: string
+
+notes:
+  - Sections may be marked status=NOT_IMPLEMENTED in early milestones; contract still requires the keys.
+  - Win rate may appear under trade_statistics and meets_soft_targets; it is never the sole approval criterion.
+  - No order placement fields are permitted in this schema.

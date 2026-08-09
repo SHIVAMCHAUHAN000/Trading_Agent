@@ -1,0 +1,230 @@
+# Strategy Research Request — machine-readable input contract
+# Version: 0.1.0
+# Companion to: docs/AGENT_CONTRACT.md
+
+$schema_name: StrategyResearchRequest
+version: "0.1.0"
+
+required:
+  - strategy_name
+  - market
+  - universe
+  - timeframe
+  - entry
+  - exit
+  - position_sizing
+  - costs
+  - capital
+  - period
+
+properties:
+  strategy_name:
+    type: string
+    minLength: 1
+    description: Human-readable experiment / strategy name
+
+  market:
+    type: string
+    enum:
+      - Indian_equities
+
+  universe:
+    type: object
+    required: [type]
+    properties:
+      type:
+        type: string
+        enum:
+          - NSE_equities
+          - NSE_index
+          - custom_symbols
+      symbols:
+        type: array
+        items:
+          type: string
+        description: Required when type = custom_symbols
+      filters:
+        type: object
+        description: Optional liquidity / listing-age / membership filters (later stages)
+
+  timeframe:
+    type: string
+    enum:
+      - daily
+
+  entry:
+    type: object
+    required: [condition]
+    properties:
+      condition:
+        type: string
+        description: Machine-readable entry rule identifier or expression
+      parameters:
+        type: object
+        additionalProperties: true
+
+  exit:
+    type: object
+    required: [condition]
+    properties:
+      condition:
+        type: string
+      parameters:
+        type: object
+        additionalProperties: true
+
+  position_sizing:
+    type: object
+    required: [method]
+    properties:
+      method:
+        type: string
+        enum:
+          - equal_weight
+          - fixed_fraction
+          - volatility_target
+          - custom
+      max_positions:
+        type: integer
+        minimum: 1
+      parameters:
+        type: object
+        additionalProperties: true
+
+  holding_period:
+    type: object
+    properties:
+      min_days:
+        type: integer
+        minimum: 0
+      max_days:
+        type: integer
+        minimum: 1
+      target_days:
+        type: integer
+        minimum: 1
+
+  execution:
+    type: object
+    properties:
+      signal_time:
+        type: string
+        enum: [close, open]
+        default: close
+      execution_time:
+        type: string
+        enum: [same_close, next_open, next_close]
+        default: next_open
+
+  costs:
+    type: object
+    description: Cost model configuration; concrete numbers filled in later stages
+    properties:
+      brokerage:
+        description: Brokerage schedule id or numeric config
+      slippage_bps:
+        type: number
+        minimum: 0
+      spread_bps:
+        type: number
+        minimum: 0
+      other:
+        type: object
+        additionalProperties: true
+    additionalProperties: true
+
+  capital:
+    type: number
+    exclusiveMinimum: 0
+    description: Starting capital in INR
+
+  benchmark:
+    type: string
+    default: NIFTY50
+
+  period:
+    type: object
+    required: [start, end]
+    properties:
+      start:
+        type: string
+        format: date
+      end:
+        type: string
+        format: date
+
+  research_objective:
+    type: object
+    description: Soft evaluation targets only — never used to optimize on OOS
+    properties:
+      target_win_rate:
+        type: number
+        minimum: 0
+        maximum: 1
+      prioritize:
+        type: array
+        items:
+          type: string
+          enum:
+            - expectancy
+            - risk_adjusted_return
+            - robustness
+            - drawdown_control
+            - win_rate
+      forbid:
+        type: array
+        items:
+          type: string
+          enum:
+            - optimize_on_oos
+            - discard_failed_experiments
+
+  notes:
+    type: string
+
+  experiment_tags:
+    type: array
+    items:
+      type: string
+
+example:
+  strategy_name: momentum_test_001
+  market: Indian_equities
+  universe:
+    type: NSE_equities
+  timeframe: daily
+  entry:
+    condition: 12_month_momentum > threshold
+    parameters:
+      lookback_days: 252
+      threshold: 0.10
+  exit:
+    condition: momentum_reversal
+    parameters:
+      exit_threshold: 0.0
+  position_sizing:
+    method: equal_weight
+    max_positions: 10
+  execution:
+    signal_time: close
+    execution_time: next_open
+  costs:
+    brokerage: configured
+    slippage_bps: configured
+    spread_bps: configured
+  capital: 1000000
+  benchmark: NIFTY50
+  period:
+    start: "2006-01-01"
+    end: "2026-01-01"
+  research_objective:
+    target_win_rate: 0.70
+    prioritize:
+      - expectancy
+      - risk_adjusted_return
+      - robustness
+    forbid:
+      - optimize_on_oos
+  notes: >
+    Hypothesis: 12-month cross-sectional momentum persists in NSE equities
+    after costs, with unstable performance across regimes.

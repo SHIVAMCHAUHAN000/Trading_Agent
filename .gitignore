@@ -1,0 +1,39 @@
+# Python
+__pycache__/
+*.py[cod]
+*.egg-info/
+.venv/
+venv/
+.env
+.pytest_cache/
+.ruff_cache/
+.mypy_cache/
+dist/
+build/
+
+# Data — keep raw immutable locally; do not push large dumps by default
+data/raw/**
+!data/raw/.gitkeep
+data/processed/**
+!data/processed/.gitkeep
+data/features/**
+!data/features/.gitkeep
+
+# Reports / experiment outputs
+reports/**
+!reports/.gitkeep
+*.parquet
+*.pkl
+*.h5
+
+# IDE / OS
+.idea/
+.vscode/
+.DS_Store
+Thumbs.db
+
+# Secrets
+.env.*
+!.env.example
+**/credentials*.json
+**/service-account*.json
