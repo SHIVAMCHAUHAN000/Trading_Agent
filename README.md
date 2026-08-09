@@ -13,8 +13,8 @@ Research and validation only. **No trade execution.**
 | 3 | Historical-data system | **Done** |
 | 4 | Strategy specification | **Done** |
 | 5 | Backtesting engine | **Done** |
-| 6 | Performance / risk analytics | **Done (awaiting approval)** |
-| 7 | Validation & anti-overfitting | Not started |
+| 6 | Performance / risk analytics | **Done** |
+| 7 | Validation & anti-overfitting | **Done (awaiting approval)** |
 | 8 | AI research agent | Not started |
 | 9 | Connect through Hermes | Later |
 | 10 | Research dashboard / report | Not started |
@@ -68,6 +68,14 @@ python scripts/run_backtest.py --strategy strategies/defs/momentum_cross_section
 ```
 
 Details: [`docs/BACKTEST_ENGINE.md`](docs/BACKTEST_ENGINE.md) · analytics: [`docs/ANALYTICS.md`](docs/ANALYTICS.md)
+
+## Validation (Stage 7)
+
+```powershell
+python scripts/run_validation.py --strategy strategies/defs/momentum_cross_section_v1.yaml
+```
+
+Details: [`docs/VALIDATION.md`](docs/VALIDATION.md)
 
 ## Milestone rule
 

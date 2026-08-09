@@ -36,6 +36,7 @@ def run_backtest(
     bars: pd.DataFrame | None = None,
     *,
     cost_multiplier: float = 1.0,
+    warmup_calendar_days: int = 400,
 ) -> BacktestResult:
     if spec.execution.execution_time.value != "next_open":
         raise ValueError("V1 engine supports execution_time=next_open only")
@@ -44,25 +45,29 @@ def run_backtest(
     if not spec.execution.long_only:
         raise ValueError("V1 engine is long-only")
 
-    bars = load_bars() if bars is None else bars.copy()
-    bars["Date"] = pd.to_datetime(bars["Date"]).dt.normalize()
+    bars_all = load_bars() if bars is None else bars.copy()
+    bars_all["Date"] = pd.to_datetime(bars_all["Date"]).dt.normalize()
 
     start = pd.Timestamp(spec.period.start)
-    end = pd.Timestamp(spec.period.end) if spec.period.end else bars["Date"].max()
-    bars = bars[(bars["Date"] >= start) & (bars["Date"] <= end)].copy()
+    end = pd.Timestamp(spec.period.end) if spec.period.end else bars_all["Date"].max()
+    warmup_start = start - pd.Timedelta(days=int(warmup_calendar_days))
 
-    open_px = to_price_panel(bars, "Open")
-    close_px = to_price_panel(bars, "Close")
-    dates = close_px.index
-    if len(dates) < 300:
+    # Keep pre-period history for signals; simulate portfolio only in [start, end].
+    bars_signal = bars_all[(bars_all["Date"] >= warmup_start) & (bars_all["Date"] <= end)].copy()
+    open_px = to_price_panel(bars_signal, "Open")
+    close_px = to_price_panel(bars_signal, "Close")
+    all_dates = close_px.index
+    sim_dates = all_dates[(all_dates >= start) & (all_dates <= end)]
+    if len(all_dates) < 120:
         raise ValueError("Insufficient history for momentum lookback / backtest")
+    if len(sim_dates) < 20:
+        raise ValueError("Evaluation window too short for backtest metrics")
 
     targets = build_target_weights(spec, close_px)
-    # Map signal date -> execution date (next open)
     exec_plan: dict[pd.Timestamp, pd.Series] = {}
     for signal_dt, weights in targets.iterrows():
-        exec_dt = _next_trading_day(dates, signal_dt)
-        if exec_dt is None:
+        exec_dt = _next_trading_day(all_dates, signal_dt)
+        if exec_dt is None or exec_dt < start or exec_dt > end:
             continue
         exec_plan[exec_dt] = weights
 
@@ -78,10 +83,7 @@ def run_backtest(
     trades: list[dict[str, Any]] = []
     equity_rows: list[dict[str, Any]] = []
 
-    symbols = list(close_px.columns)
-
-    for dt in dates:
-        # Execute pending rebalance at today's open
+    for dt in sim_dates:
         if dt in exec_plan:
             cash, shares, open_lots, day_trades = _rebalance_at_open(
                 dt=dt,
@@ -94,7 +96,6 @@ def run_backtest(
             )
             trades.extend(day_trades)
 
-        # Mark to market at close
         mtm = 0.0
         for sym, qty in shares.items():
             px = close_px.at[dt, sym]
@@ -132,7 +133,8 @@ def run_backtest(
             ]
         )
 
-    bench = benchmark_close(bars).reindex(equity_curve.index).ffill()
+    bars_eval = bars_all[(bars_all["Date"] >= start) & (bars_all["Date"] <= end)].copy()
+    bench = benchmark_close(bars_signal).reindex(equity_curve.index).ffill()
     if not bench.empty and pd.notna(bench.iloc[0]) and float(bench.iloc[0]) != 0:
         benchmark_equity = bench / float(bench.iloc[0]) * float(spec.capital)
     else:
@@ -143,6 +145,7 @@ def run_backtest(
         "capital": float(spec.capital),
         "start": str(start.date()),
         "end": str(end.date()),
+        "warmup_start": str(warmup_start.date()),
         "cost_model_id": cost_cfg.model_id,
         "cost_multiplier": cost_multiplier,
         "n_trades": int(len(trades_df)),
@@ -155,6 +158,7 @@ def run_backtest(
             "Costs deducted in cash at fill time",
             "Current NIFTY50 membership universe (survivorship bias)",
             "Benchmark is buy-and-hold ^NSEI scaled to starting capital",
+            "Signal warmup uses pre-period history; portfolio simulation starts at period.start",
         ],
     }
     return BacktestResult(
@@ -163,7 +167,7 @@ def run_backtest(
         positions_end=shares,
         meta=meta,
         benchmark_equity=benchmark_equity,
-        bars=bars,
+        bars=bars_eval,
     )
 
 

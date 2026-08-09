@@ -106,3 +106,29 @@
 **Out of scope for Stage 6:**
 
 - OOS / walk-forward / parameter sensitivity (Stage 7)
+
+## Stage 7 — Validation & anti-overfitting
+
+**Status:** COMPLETE (awaiting approval before Stage 8)  
+**Goal:** Frozen-parameter OOS, walk-forward, IS-only parameter sensitivity, cost stress.
+
+**Done:**
+
+- Engine warmup fix (signals can use pre-period history)
+- `validation/out_of_sample`, `walk_forward`, `robustness`, `stress`, `suite.py`
+- CLI: `scripts/run_validation.py`
+- Smoke validation on example momentum strategy
+
+**Smoke verdict (NOT a trade approval):**
+
+- Overall: `PROMISING`
+- OOS: `PROMISING_OOS` (OOS win rate ~63.4%, not 70%)
+- Walk-forward: `PROMISING_WALK_FORWARD` (8/8 positive Sharpe folds)
+- Parameter surface: `ROBUST_REGION`
+- Cost stress: `SURVIVES_COST_STRESS`
+- Remaining blockers: survivorship bias, no Monte Carlo/bias engine yet, no Hermes
+
+**Out of scope for Stage 7:**
+
+- AI research agent / Hermes
+- Full Monte Carlo / bootstrap / bias detector (can deepen later)
