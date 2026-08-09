@@ -132,3 +132,22 @@
 
 - AI research agent / Hermes
 - Full Monte Carlo / bootstrap / bias detector (can deepen later)
+
+## Stage 8 — AI research agent
+
+**Status:** COMPLETE (awaiting approval before Stage 9)  
+**Goal:** Tool-using research workflow that produces Layer-1 + Layer-2 reports without trade execution.
+
+**Done:**
+
+- `agents/research_agent/tools.py` tool registry
+- Deterministic workflow with fail gates + experiment IDs
+- Simple markdown + full technical JSON report
+- Bootstrap, Monte Carlo (trade permutation), regime subperiods, bias flags
+- CLI: `scripts/run_research_agent.py`
+- Smoke: `EXP-000001` → conclusion `PROMISING` (not VALIDATED_CANDIDATE due to survivorship)
+
+**Out of scope for Stage 8:**
+
+- Hermes / LLM planner (Stage 9)
+- Supabase experiment sync (credentials pending)

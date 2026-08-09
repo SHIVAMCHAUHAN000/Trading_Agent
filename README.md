@@ -14,8 +14,8 @@ Research and validation only. **No trade execution.**
 | 4 | Strategy specification | **Done** |
 | 5 | Backtesting engine | **Done** |
 | 6 | Performance / risk analytics | **Done** |
-| 7 | Validation & anti-overfitting | **Done (awaiting approval)** |
-| 8 | AI research agent | Not started |
+| 7 | Validation & anti-overfitting | **Done** |
+| 8 | AI research agent | **Done (awaiting approval)** |
 | 9 | Connect through Hermes | Later |
 | 10 | Research dashboard / report | Not started |
 
@@ -76,6 +76,14 @@ python scripts/run_validation.py --strategy strategies/defs/momentum_cross_secti
 ```
 
 Details: [`docs/VALIDATION.md`](docs/VALIDATION.md)
+
+## Research agent (Stage 8)
+
+```powershell
+python scripts/run_research_agent.py --strategy strategies/defs/momentum_cross_section_v1.yaml
+```
+
+Details: [`docs/RESEARCH_AGENT.md`](docs/RESEARCH_AGENT.md)
 
 ## Milestone rule
 

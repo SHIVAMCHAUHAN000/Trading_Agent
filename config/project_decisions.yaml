@@ -9,11 +9,13 @@ stage_completed:
   - 5_backtesting_engine
   - 6_performance_risk_analytics
   - 7_validation_anti_overfitting
-stage_current: 7_awaiting_approval
+  - 8_ai_research_agent
+stage_current: 8_awaiting_approval
 latest_dataset_pointer: config/latest_dataset.yaml
 example_strategy: strategies/defs/momentum_cross_section_v1.yaml
 milestone_1: complete
 milestone_2: complete
+
 
 
 
