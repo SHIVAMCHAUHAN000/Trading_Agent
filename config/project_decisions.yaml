@@ -10,7 +10,9 @@ stage_completed:
   - 6_performance_risk_analytics
   - 7_validation_anti_overfitting
   - 8_ai_research_agent
-stage_current: 8_awaiting_approval
+  - 9_hermes_bridge
+  - 10_research_dashboard
+stage_current: 10_complete_v1_roadmap
 latest_dataset_pointer: config/latest_dataset.yaml
 example_strategy: strategies/defs/momentum_cross_section_v1.yaml
 milestone_1: complete
@@ -56,10 +58,12 @@ research_defaults:
   costs: indian_cash_equity_conservative_defaults
 
 orchestration:
-  hermes: later
+  hermes: skill_bridge
+  hermes_skill: hermes/skills/quant-research/indian-market-strategy-research
+  llm_planner: optional
 
 notes:
   - Stage 1 contract APPROVED
   - Supabase credentials pending
   - Real starting capital pending confirmation
-  - Hermes deferred until quant lab works
+  - Hermes runtime optional; skill + RPC bridge shipped in Stage 9

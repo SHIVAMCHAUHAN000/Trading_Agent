@@ -15,9 +15,9 @@ Research and validation only. **No trade execution.**
 | 5 | Backtesting engine | **Done** |
 | 6 | Performance / risk analytics | **Done** |
 | 7 | Validation & anti-overfitting | **Done** |
-| 8 | AI research agent | **Done (awaiting approval)** |
-| 9 | Connect through Hermes | Later |
-| 10 | Research dashboard / report | Not started |
+| 8 | AI research agent | **Done** |
+| 9 | Connect through Hermes | **Done** |
+| 10 | Research dashboard / report | **Done** |
 
 ## Frozen V1 decisions
 
@@ -29,7 +29,7 @@ Research and validation only. **No trade execution.**
 - **Portfolio:** long-only, default capital ₹10,00,000 (**placeholder**)
 - **Validation:** 70/30 IS/OOS + walk-forward
 - **Costs:** conservative Indian cash-equity defaults in `config/cost_defaults.yaml`
-- **Hermes:** deferred
+- **Hermes:** skill + RPC bridge (runtime optional)
 
 ## Docs / contracts
 
@@ -84,6 +84,24 @@ python scripts/run_research_agent.py --strategy strategies/defs/momentum_cross_s
 ```
 
 Details: [`docs/RESEARCH_AGENT.md`](docs/RESEARCH_AGENT.md)
+
+## Hermes bridge (Stage 9)
+
+```powershell
+python scripts/run_hermes_bridge.py --mode deterministic
+python scripts/hermes_tool_rpc.py --list
+powershell -ExecutionPolicy Bypass -File scripts\install_hermes_skill.ps1
+```
+
+Details: [`docs/HERMES.md`](docs/HERMES.md)
+
+## Dashboard (Stage 10)
+
+Research runs now write `dashboard.html` next to the JSON/Markdown reports.
+
+```powershell
+python scripts/render_dashboard.py reports\_stage9_bridge\research_report.json
+```
 
 ## Milestone rule
 

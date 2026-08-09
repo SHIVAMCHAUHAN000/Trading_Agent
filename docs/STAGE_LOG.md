@@ -151,3 +151,37 @@
 
 - Hermes / LLM planner (Stage 9)
 - Supabase experiment sync (credentials pending)
+
+## Stage 9 — Connect through Hermes
+
+**Status:** COMPLETE (awaiting approval before Stage 10)  
+**Goal:** Expose the quant lab to Hermes/LLM planners without requiring Hermes runtime for core research.
+
+**Done:**
+
+- Hermes skill: `hermes/skills/quant-research/indian-market-strategy-research/`
+- Tool schemas + dispatcher (`agents/hermes_bridge/`)
+- RPC CLI: `scripts/hermes_tool_rpc.py`
+- Bridge CLI: `scripts/run_hermes_bridge.py` (`deterministic` / `llm` / `auto`)
+- Skill installer: `scripts/install_hermes_skill.ps1`
+- Docs: `docs/HERMES.md`
+
+**Note:** Nous Hermes binary is optional. Deterministic mode works with zero API keys.
+
+**Out of scope for Stage 9:**
+
+- Bundling/installing the full Hermes runtime in this repo
+- Final dashboard polish (Stage 10)
+
+## Stage 10 — Research dashboard / report
+
+**Status:** COMPLETE  
+**Goal:** Human-friendly HTML dashboard alongside Layer-1 markdown and Layer-2 JSON.
+
+**Done:**
+
+- `reports_ui/render_dashboard.py`
+- Auto-generated `dashboard.html` from research workflow
+- CLI: `scripts/render_dashboard.py <research_report.json>`
+
+**V1 roadmap complete** (Hermes runtime + Supabase credentials still optional external deps).

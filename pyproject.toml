@@ -29,6 +29,9 @@ dev = [
   "pytest>=8.0",
   "ruff>=0.3",
 ]
+llm = [
+  "openai>=1.30",
+]
 
 [tool.setuptools.packages.find]
 where = ["."]
@@ -38,6 +41,7 @@ include = [
   "backtesting*",
   "database*",
   "market_data*",
+  "reports_ui*",
   "strategies*",
   "validation*",
 ]

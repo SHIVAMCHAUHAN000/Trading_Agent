@@ -35,4 +35,4 @@ def test_project_decisions_match_checklist():
     assert data["agent"]["trade_execution"] is False
     assert data["agent"]["long_only_v1"] is True
     assert data["research_defaults"]["is_oos_split"] == "70/30"
-    assert data["orchestration"]["hermes"] == "later"
+    assert data["orchestration"]["hermes"] in {"later", "skill_bridge"}

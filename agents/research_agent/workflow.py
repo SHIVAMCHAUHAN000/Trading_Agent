@@ -22,6 +22,7 @@ from agents.research_agent.report_builder import (
     render_simple_markdown,
 )
 from agents.research_agent import tools
+from reports_ui.render_dashboard import write_dashboard
 
 ROOT = Path(__file__).resolve().parents[2]
 
@@ -140,8 +141,10 @@ def run_research_workflow(
             "assumptions_log": assumptions,
         },
     }
-    (out / "research_report.json").write_text(json.dumps(payload, indent=2, default=str), encoding="utf-8")
+    report_json = out / "research_report.json"
+    report_json.write_text(json.dumps(payload, indent=2, default=str), encoding="utf-8")
     (out / "SIMPLE_REPORT.md").write_text(render_simple_markdown(simple, experiment_id=experiment_id), encoding="utf-8")
+    dashboard_path = write_dashboard(report_json, out / "dashboard.html")
 
     append_experiment(
         {
@@ -152,6 +155,7 @@ def run_research_workflow(
             "overall_validation": validation.get("overall_verdict"),
             "out_dir": str(out),
             "failed_gate": hard_fail,
+            "dashboard": str(dashboard_path),
         }
     )
 
@@ -161,6 +165,7 @@ def run_research_workflow(
         "conclusion": conclusion,
         "validation_overall": validation.get("overall_verdict"),
         "simple_report_path": str(out / "SIMPLE_REPORT.md"),
-        "research_report_path": str(out / "research_report.json"),
+        "research_report_path": str(report_json),
+        "dashboard_path": str(dashboard_path),
         "workflow_steps": steps,
     }
