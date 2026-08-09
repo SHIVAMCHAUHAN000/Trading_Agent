@@ -20,6 +20,8 @@ class BacktestResult:
     trades: pd.DataFrame
     positions_end: dict[str, float]
     meta: dict[str, Any]
+    benchmark_equity: pd.Series | None = None
+    bars: pd.DataFrame | None = None
 
 
 def _next_trading_day(dates: pd.DatetimeIndex, signal_dt: pd.Timestamp) -> pd.Timestamp | None:
@@ -130,7 +132,12 @@ def run_backtest(
             ]
         )
 
-    bench = benchmark_close(bars)
+    bench = benchmark_close(bars).reindex(equity_curve.index).ffill()
+    if not bench.empty and pd.notna(bench.iloc[0]) and float(bench.iloc[0]) != 0:
+        benchmark_equity = bench / float(bench.iloc[0]) * float(spec.capital)
+    else:
+        benchmark_equity = pd.Series(dtype=float)
+
     meta = {
         "strategy_name": spec.name,
         "capital": float(spec.capital),
@@ -147,6 +154,7 @@ def run_backtest(
             "Equal-weight monthly rebalance among top momentum names",
             "Costs deducted in cash at fill time",
             "Current NIFTY50 membership universe (survivorship bias)",
+            "Benchmark is buy-and-hold ^NSEI scaled to starting capital",
         ],
     }
     return BacktestResult(
@@ -154,6 +162,8 @@ def run_backtest(
         trades=trades_df,
         positions_end=shares,
         meta=meta,
+        benchmark_equity=benchmark_equity,
+        bars=bars,
     )
 
 

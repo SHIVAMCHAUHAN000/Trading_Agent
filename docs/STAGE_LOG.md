@@ -88,3 +88,21 @@
 - OOS / walk-forward / parameter sweeps
 - Monte Carlo / bias engine
 - Hermes
+
+## Stage 6 — Performance / risk analytics
+
+**Status:** COMPLETE (awaiting approval before Stage 7)  
+**Goal:** Deeper return/risk stats, trade MAE/MFE, and NIFTY50 benchmark comparison.
+
+**Done:**
+
+- `analytics/performance/returns.py`
+- `analytics/risk/drawdown.py`
+- `analytics/performance/benchmark.py`
+- `analytics/performance/trade_path.py` (MAE/MFE)
+- `analytics/report.py` assembly + CLI wiring
+- Smoke run includes benchmark alpha/beta/IR and profit concentration
+
+**Out of scope for Stage 6:**
+
+- OOS / walk-forward / parameter sensitivity (Stage 7)

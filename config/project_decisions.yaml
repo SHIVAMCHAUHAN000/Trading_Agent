@@ -7,10 +7,12 @@ stage_completed:
   - 3_historical_data_system
   - 4_strategy_specification
   - 5_backtesting_engine
-stage_current: 5_awaiting_approval
+  - 6_performance_risk_analytics
+stage_current: 6_awaiting_approval
 latest_dataset_pointer: config/latest_dataset.yaml
 example_strategy: strategies/defs/momentum_cross_section_v1.yaml
 milestone_1: complete
+
 
 
 project:
