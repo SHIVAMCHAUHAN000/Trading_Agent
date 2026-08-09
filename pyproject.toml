@@ -37,6 +37,7 @@ include = [
   "analytics*",
   "backtesting*",
   "database*",
+  "market_data*",
   "strategies*",
   "validation*",
 ]

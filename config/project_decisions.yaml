@@ -4,7 +4,9 @@
 stage_completed:
   - 1_agent_contract
   - 2_project_setup
-stage_current: 2_project_setup_awaiting_approval
+  - 3_historical_data_system
+stage_current: 3_awaiting_approval
+latest_dataset_pointer: config/latest_dataset.yaml
 
 project:
   name: Trading_Agent

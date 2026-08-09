@@ -1,11 +1,11 @@
 # V1 research universe: NIFTY 50
 # Symbols are Yahoo Finance style with .NS suffix.
-# This list is a Stage-2 placeholder and must be refreshed against current
-# index membership before production research (survivorship note applies).
+# Constituents aligned to public NIFTY50 basket as of 2026-08-06.
+# Refresh before production research; survivorship bias still applies.
 
 universe_id: NIFTY50
-as_of: "2026-03-29"
-source_note: "Static starter list for project setup; refresh before Stage 3 research runs."
+as_of: "2026-08-06"
+source_note: "Current-constituent starter list for Stage 3 data pulls. Not point-in-time membership."
 benchmark_yahoo_symbol: "^NSEI"
 
 symbols:
@@ -28,11 +28,10 @@ symbols:
   - HCLTECH.NS
   - HDFCBANK.NS
   - HDFCLIFE.NS
-  - HEROMOTOCO.NS
   - HINDALCO.NS
   - HINDUNILVR.NS
   - ICICIBANK.NS
-  - INDUSINDBK.NS
+  - INDIGO.NS
   - INFY.NS
   - ITC.NS
   - JIOFIN.NS
@@ -49,17 +48,19 @@ symbols:
   - RELIANCE.NS
   - SBILIFE.NS
   - SBIN.NS
+  - SHRIRAMFIN.NS
   - SUNPHARMA.NS
   - TCS.NS
   - TATACONSUM.NS
-  - TATAMOTORS.NS
   - TATASTEEL.NS
   - TECHM.NS
   - TITAN.NS
   - TMPV.NS
+  - TRENT.NS
   - ULTRACEMCO.NS
   - WIPRO.NS
 
 warnings:
   - "Current constituents ≠ historical membership. Point-in-time membership is required to reduce survivorship bias."
-  - "Verify each Yahoo symbol before first data pull; NSE renames/ticker changes happen."
+  - "Yahoo tickers can rename (e.g. TATAMOTORS.NS -> TMPV.NS, ZOMATO.NS -> ETERNAL.NS)."
+  - "Verify symbols before each major research campaign."

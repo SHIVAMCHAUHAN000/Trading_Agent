@@ -9,8 +9,8 @@ Research and validation only. **No trade execution.**
 | Stage | Description | Status |
 |---|---|---|
 | 1 | Define the agent (contract) | **Done / APPROVED** |
-| 2 | Set up project | **Done (awaiting approval)** |
-| 3 | Historical-data system | Not started |
+| 2 | Set up project | **Done** |
+| 3 | Historical-data system | **Done (awaiting approval)** |
 | 4 | Strategy specification | Not started |
 | 5 | Backtesting engine | Not started |
 | 6 | Performance / risk analytics | Not started |
@@ -48,6 +48,14 @@ python -m pip install --upgrade pip
 pip install -e ".[dev]"
 copy .env.example .env
 ```
+
+## Historical data (Stage 3)
+
+```powershell
+python scripts/run_historical_pipeline.py --start 2015-01-01
+```
+
+Details: [`docs/DATA_LAYER.md`](docs/DATA_LAYER.md) · latest pointer: [`config/latest_dataset.yaml`](config/latest_dataset.yaml)
 
 ## Milestone rule
 

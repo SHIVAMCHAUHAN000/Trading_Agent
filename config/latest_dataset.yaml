@@ -1,0 +1,18 @@
+# Pointer to the latest successful local historical dataset (Stage 3)
+# Parquet files stay on disk under data/; they are gitignored.
+
+dataset_id: YF_20260809T070919Z
+provider: yfinance
+universe_id: NIFTY50
+history_start_requested: "2015-01-01"
+quality_status: PASS_WITH_WARNINGS
+raw_path: data/raw/yfinance/YF_20260809T070919Z
+processed_path: data/processed/yfinance/YF_20260809T070919Z
+bars_path: data/processed/yfinance/YF_20260809T070919Z/bars.parquet
+quality_report_path: data/processed/yfinance/YF_20260809T070919Z/data_quality_report.json
+symbols_downloaded: 51  # 50 equities + ^NSEI
+rows: 139467
+notes:
+  - Raw layer is immutable.
+  - PASS_WITH_WARNINGS includes late listing starts and survivorship bias notes.
+  - Supabase catalog sync pending credentials.

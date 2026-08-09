@@ -11,7 +11,7 @@
 
 ## Stage 2 — Set up project
 
-**Status:** COMPLETE (awaiting user approval before Stage 3)  
+**Status:** COMPLETE / APPROVED (proceeded by user: commit + push + go ahead)  
 **Goal:** Repo layout, Python 3.11 project config, GitHub remote, frozen decisions, placeholders only.
 
 **Done:**
@@ -21,17 +21,29 @@
 - `pyproject.toml` / `requirements.txt` / `.venv` on Python 3.11
 - Frozen decisions + cost defaults + NIFTY50 universe stub
 - Supabase schema sketch (`database/schema.sql`)
-- Git initialized; remote `origin` → `https://github.com/SHIVAMCHAUHAN000/Trading_Agent.git`
-- Stage 2 scaffold tests passing
+- Initial commit pushed to `origin/main`
 
-**Pending from user (does not block Stage 3 start):**
+## Stage 3 — Historical data system
 
-- Supabase connection string / keys (`.env`)
-- Confirm real starting capital (currently ₹10,00,000 placeholder)
-- Initial git commit + push (say the word)
+**Status:** COMPLETE (awaiting approval before Stage 4)  
+**Goal:** yfinance → immutable raw → validate → processed Parquet for NIFTY50 + benchmark from 2015-01-01.
 
-**Out of scope for Stage 2:**
+**Done:**
 
-- Data download / validation pipelines
+- `market_data/` package: universe, download, store, validate, pipeline
+- CLI: `scripts/run_historical_pipeline.py`
+- Fixed NIFTY50 Yahoo tickers (removed dead `TATAMOTORS.NS`; added `TMPV`, `TRENT`, `SHRIRAMFIN`, `INDIGO`)
+- Successful local dataset: `YF_20260809T070919Z` (`PASS_WITH_WARNINGS`, 51 symbols, 139467 rows)
+- Unit tests for validation + immutable storage
+
+**Known limitations (flagged, not blockers):**
+
+- Survivorship bias (current constituents only)
+- Some names start after 2015 (IPO / listing age)
+- Supabase catalog sync still waiting on credentials
+
+**Out of scope for Stage 3:**
+
+- Strategy specification engine
 - Backtest engine
 - Hermes
