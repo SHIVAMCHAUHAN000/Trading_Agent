@@ -11,8 +11,8 @@ Research and validation only. **No trade execution.**
 | 1 | Define the agent (contract) | **Done / APPROVED** |
 | 2 | Set up project | **Done** |
 | 3 | Historical-data system | **Done** |
-| 4 | Strategy specification | **Done (awaiting approval)** |
-| 5 | Backtesting engine | Not started |
+| 4 | Strategy specification | **Done** |
+| 5 | Backtesting engine | **Done (awaiting approval)** |
 | 6 | Performance / risk analytics | Not started |
 | 7 | Validation & anti-overfitting | Not started |
 | 8 | AI research agent | Not started |
@@ -60,6 +60,14 @@ Details: [`docs/DATA_LAYER.md`](docs/DATA_LAYER.md) · latest pointer: [`config/
 ## Strategy specification (Stage 4)
 
 Details: [`docs/STRATEGY_SPEC.md`](docs/STRATEGY_SPEC.md) · example: [`strategies/defs/momentum_cross_section_v1.yaml`](strategies/defs/momentum_cross_section_v1.yaml)
+
+## Backtest (Stage 5)
+
+```powershell
+python scripts/run_backtest.py --strategy strategies/defs/momentum_cross_section_v1.yaml
+```
+
+Details: [`docs/BACKTEST_ENGINE.md`](docs/BACKTEST_ENGINE.md)
 
 ## Milestone rule
 

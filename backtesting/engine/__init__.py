@@ -1,1 +1,5 @@
-﻿"""Package placeholder — implemented in later stages."""
+﻿"""Backtest engine package."""
+
+from backtesting.engine.engine import BacktestResult, run_backtest
+
+__all__ = ["BacktestResult", "run_backtest"]

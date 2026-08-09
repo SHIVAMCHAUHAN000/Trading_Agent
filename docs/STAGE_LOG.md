@@ -64,3 +64,27 @@
 **Out of scope for Stage 4:**
 
 - Signal computation / backtest engine (Stage 5)
+
+## Stage 5 — Backtesting engine
+
+**Status:** COMPLETE (awaiting approval before Stage 6)  
+**Goal:** Milestone 1 — reproducible daily backtest with trade ledger, equity curve, costs, and core metrics.
+
+**Done:**
+
+- Cost model (`backtesting/costs/model.py`)
+- Momentum signal builder + daily engine (`backtesting/engine/`)
+- Performance metrics (`analytics/performance/metrics.py`)
+- CLI: `scripts/run_backtest.py`
+- Smoke run on `momentum_cross_section_v1` using dataset `YF_20260809T070919Z`
+
+**Example smoke-run snapshot (not a validation conclusion):**
+
+- CAGR ~21.6%, Sharpe ~1.10, Max DD ~-42.6%, Win rate ~56.9%, 290 trades
+- Warnings: survivorship bias, no OOS/walk-forward yet
+
+**Out of scope for Stage 5:**
+
+- OOS / walk-forward / parameter sweeps
+- Monte Carlo / bias engine
+- Hermes
