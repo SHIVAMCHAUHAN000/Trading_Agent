@@ -1,0 +1,76 @@
+# Example V1 strategy specification (hypothesis, not a proven edge)
+# Used to exercise the StrategySpec contract before the backtester exists.
+
+name: momentum_cross_section_v1
+version: "0.1.0"
+
+market: Indian_equities
+
+universe:
+  type: NIFTY50
+
+timeframe: daily
+
+signal:
+  type: cross_sectional_momentum
+  lookback_days: 252
+  skip_days: 21   # common 12-1 style: skip most recent month
+  rank: top_n
+
+entry:
+  condition: rank_by_momentum_desc
+  parameters:
+    lookback_days: 252
+    skip_days: 21
+    top_n: 10
+    min_momentum: 0.0
+
+exit:
+  condition: leave_top_n_or_momentum_non_positive
+  parameters:
+    top_n: 10
+    exit_momentum_below: 0.0
+    rebalance: monthly
+
+position:
+  method: equal_weight
+  max_positions: 10
+
+execution:
+  signal_time: close
+  execution_time: next_open
+  long_only: true
+
+cost_model:
+  model_id: indian_cash_equity_conservative_v1
+  brokerage: configured
+  slippage_bps: null
+  spread_bps: null
+
+capital: 1000000
+
+benchmark: NIFTY50
+
+period:
+  start: "2015-01-01"
+  end: null
+
+research_objective:
+  target_win_rate: 0.70
+  prioritize:
+    - expectancy
+    - risk_adjusted_return
+    - robustness
+  forbid:
+    - optimize_on_oos
+
+notes: >
+  Hypothesis only: 12-1 cross-sectional momentum among current NIFTY50 names
+  may produce positive expectancy after costs. This file does not claim a
+  validated edge. Survivorship bias from current membership is a known risk.
+
+tags:
+  - momentum
+  - nifty50
+  - example
+  - stage4

@@ -1,0 +1,92 @@
+# Strategy Specification — machine-readable strategy contract (Stage 4)
+# Validated in Python by strategies.schema.StrategySpec
+
+$schema_name: StrategySpec
+version: "0.1.0"
+
+required:
+  - name
+  - market
+  - universe
+  - timeframe
+  - entry
+  - exit
+  - position
+  - execution
+  - cost_model
+  - capital
+  - period
+
+properties:
+  name: { type: string }
+  version: { type: string }
+  market:
+    type: string
+    enum: [Indian_equities]
+  universe:
+    type: object
+    required: [type]
+    properties:
+      type:
+        type: string
+        enum: [NSE_equities, NSE_index, custom_symbols, NIFTY50]
+      symbols:
+        type: array
+        items: { type: string }
+  timeframe:
+    type: string
+    enum: [daily]
+  signal:
+    type: object
+    additionalProperties: true
+  entry:
+    type: object
+    required: [condition]
+    properties:
+      condition: { type: string }
+      parameters: { type: object }
+  exit:
+    type: object
+    required: [condition]
+    properties:
+      condition: { type: string }
+      parameters: { type: object }
+  position:
+    type: object
+    required: [method]
+    properties:
+      method:
+        type: string
+        enum: [equal_weight, fixed_fraction, volatility_target, custom]
+      max_positions: { type: integer, minimum: 1 }
+  holding_period:
+    type: object
+  execution:
+    type: object
+    properties:
+      signal_time: { type: string, enum: [close, open] }
+      execution_time: { type: string, enum: [same_close, next_open, next_close] }
+      long_only: { type: boolean }
+  cost_model:
+    type: object
+  capital:
+    type: number
+    exclusiveMinimum: 0
+  benchmark: { type: string }
+  period:
+    type: object
+    required: [start]
+    properties:
+      start: { type: string }
+      end: { type: string, nullable: true }
+  research_objective:
+    type: object
+    description: Soft targets only; never optimize on OOS
+  notes: { type: string }
+  tags:
+    type: array
+    items: { type: string }
+
+rules:
+  - Natural language is not a valid engine input until compiled into this spec.
+  - V1: daily, long-only, Indian equities.

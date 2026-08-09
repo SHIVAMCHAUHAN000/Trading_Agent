@@ -10,8 +10,8 @@ Research and validation only. **No trade execution.**
 |---|---|---|
 | 1 | Define the agent (contract) | **Done / APPROVED** |
 | 2 | Set up project | **Done** |
-| 3 | Historical-data system | **Done (awaiting approval)** |
-| 4 | Strategy specification | Not started |
+| 3 | Historical-data system | **Done** |
+| 4 | Strategy specification | **Done (awaiting approval)** |
 | 5 | Backtesting engine | Not started |
 | 6 | Performance / risk analytics | Not started |
 | 7 | Validation & anti-overfitting | Not started |
@@ -56,6 +56,10 @@ python scripts/run_historical_pipeline.py --start 2015-01-01
 ```
 
 Details: [`docs/DATA_LAYER.md`](docs/DATA_LAYER.md) · latest pointer: [`config/latest_dataset.yaml`](config/latest_dataset.yaml)
+
+## Strategy specification (Stage 4)
+
+Details: [`docs/STRATEGY_SPEC.md`](docs/STRATEGY_SPEC.md) · example: [`strategies/defs/momentum_cross_section_v1.yaml`](strategies/defs/momentum_cross_section_v1.yaml)
 
 ## Milestone rule
 

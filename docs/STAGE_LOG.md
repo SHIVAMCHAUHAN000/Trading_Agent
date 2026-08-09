@@ -47,3 +47,20 @@
 - Strategy specification engine
 - Backtest engine
 - Hermes
+
+## Stage 4 — Strategy specification
+
+**Status:** COMPLETE (awaiting approval before Stage 5)  
+**Goal:** Standardized machine-readable strategy contract for the future backtester.
+
+**Done:**
+
+- `strategies/schema.py` (`StrategySpec` Pydantic model)
+- `strategies/loader.py`
+- Example def: `strategies/defs/momentum_cross_section_v1.yaml`
+- Contract mirror: `contracts/strategy_spec.schema.yaml`
+- Unit tests for load + V1 constraint rejections
+
+**Out of scope for Stage 4:**
+
+- Signal computation / backtest engine (Stage 5)

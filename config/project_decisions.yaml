@@ -5,8 +5,10 @@ stage_completed:
   - 1_agent_contract
   - 2_project_setup
   - 3_historical_data_system
-stage_current: 3_awaiting_approval
+  - 4_strategy_specification
+stage_current: 4_awaiting_approval
 latest_dataset_pointer: config/latest_dataset.yaml
+example_strategy: strategies/defs/momentum_cross_section_v1.yaml
 
 project:
   name: Trading_Agent
