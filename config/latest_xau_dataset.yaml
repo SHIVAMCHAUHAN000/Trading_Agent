@@ -1,0 +1,9 @@
+dataset_id: XAU_20260809T160748Z
+symbol: XAUUSD
+timeframe: 1m
+bars_path: data/processed/xauusd/XAU_20260809T160748Z/bars_1m.parquet
+rows: 6866
+start: 2026-08-02 22:10:00+00:00
+end: 2026-08-07 20:59:00+00:00
+source: yfinance_GC=F
+note: Yahoo 1m history is short; Dukascopy preferred when reachable.

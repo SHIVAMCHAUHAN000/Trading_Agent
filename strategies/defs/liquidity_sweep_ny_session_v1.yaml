@@ -1,0 +1,140 @@
+# ============================================================================
+# V2 STRATEGY — runnable via scripts/run_liquidity_sweep_research.py
+# Requires XAU 1m dataset from scripts/run_xau_1m_pipeline.py
+# Yahoo GC=F gives only ~7 days of 1m (smoke). Dukascopy preferred for
+# multi-month history when the datafeed is reachable.
+# ============================================================================
+
+name: liquidity_sweep_ny_session_v1
+version: "0.1.0"
+
+market: XAUUSD   # ASSUMED same instrument as gold_multi_tf_range_v1 — confirm
+asset_class: commodity_fx
+
+universe:
+  type: single_symbol
+  symbol: XAUUSD
+
+session:
+  name: New_York_session
+  timezone: Asia/Kolkata  # IST
+  start: "18:30"
+  end: "21:30"
+  description: >
+    Matches roughly 8:00-11:00am US Eastern (forex NY session open).
+    Note: this 3-hour IST window shifts by 1 hour relative to US Eastern
+    during US daylight saving changes (~March and ~November) unless
+    corrected for.
+
+liquidity_marking:
+  timeframe: 15m
+  method: equal_highs_lows
+  tolerance_pct: 0.1   # DEFAULT ASSUMPTION — confirm or adjust
+  description: >
+    Mark recent swing highs/lows on the 15-min chart, within the NY
+    session window, that touch within tolerance_pct of each other at
+    least twice ("equal highs" / "equal lows" — classic resting-liquidity
+    pools where stops cluster).
+
+sweep_definition:
+  timeframe: 1m
+  method: wick_through_close_back_inside
+  parameters:
+    close_back_within_bars: 3   # DEFAULT ASSUMPTION — confirm or adjust
+  description: >
+    A 1-min candle's high (or low) pierces the marked liquidity level,
+    but price closes back on the original side within
+    close_back_within_bars 1-min candles. This is the "stop hunt" /
+    sweep signature.
+
+entry_sequence:
+  rule: double_sweep_trap
+  steps:
+    - step: 1
+      description: First liquidity level (one side) gets swept on the 1-min chart.
+    - step: 2
+      description: >
+        A second, different liquidity level gets swept — on the
+        opposite side — trapping the other side of the market too
+        (both longs and shorts now stopped out).
+    - step: 3
+      description: >
+        Only after BOTH sweeps have occurred, look for a reversal
+        confirmation candle to enter.
+
+entry:
+  condition: reversal_confirmation_after_double_sweep
+  parameters:
+    confirmation_rule: TBD — DEFAULT ASSUMPTION = next 1-min candle closes
+      back through the most recently swept level, in the reversal direction.
+      Confirm or specify your actual confirmation trigger.
+
+exit:
+  target: opposite_liquidity_level
+  stop_loss:
+    method: risk_based_position_sizing
+    risk_pct_of_capital: 2.0
+    risk_amount: 10000
+    stop_price_rule: >
+      Beyond the extreme of the most recent sweep wick (i.e. just past
+      the high/low that got swept) — position size solved backward so
+      a stop-out costs exactly risk_amount.
+
+position:
+  method: risk_based_sizing
+  risk_per_trade_pct: 2.0
+
+capital: 500000
+capital_note: "Same as gold_multi_tf_range_v1 — confirm currency/amount."
+
+benchmark: XAUUSD_buy_and_hold
+
+period:
+  start: null   # filled from available 1m dataset at runtime if null
+  end: null
+
+data_source:
+  provider: yfinance
+  symbol_candidates: [GC=F, "XAUUSD=X"]
+  known_limits: CRITICAL — see note below.
+
+# ============================================================================
+# CRITICAL DATA LIMITATION — read before expecting this to be testable
+# ============================================================================
+# This strategy needs genuine 1-minute candles (for sweep detection) during
+# a specific 3-hour daily window, ideally across months/years to be
+# statistically meaningful. Free sources (yfinance/Yahoo) only provide
+# 1-minute history for roughly the LAST 7 DAYS. That means:
+#   - A free backtest of this exact strategy would cover at most ~5-7
+#     trading days of NY sessions — nowhere near enough to trust results.
+#   - Unlike gold_multi_tf_range_v1 (where dropping to 1H solved the data
+#     problem), this strategy's core logic REQUIRES 1-min granularity —
+#     there is no meaningful way to run it on daily/4H/1H bars instead.
+#   - To backtest this properly you would need a paid data vendor, your
+#     broker's historical tick/1-min export, or a source like Dukascopy
+#     (free tick data, but requires building a downloader/converter).
+# This is flagged as an open blocker, not solved by this file alone.
+# ============================================================================
+
+open_questions:
+  - Confirm instrument is XAUUSD (not restated in this message).
+  - equal_highs_lows tolerance_pct defaulted to 0.1% — confirm or adjust.
+  - sweep close_back_within_bars defaulted to 3 — confirm or adjust.
+  - Exact reversal confirmation trigger not fully specified — defaulted as above.
+  - No free data source can meaningfully backtest this strategy (see CRITICAL DATA LIMITATION).
+
+notes: >
+  ICT-style liquidity-sweep / stop-hunt reversal strategy, translated into
+  an explicit rule set. Not yet validated, not yet executable, and blocked
+  on a real historical 1-minute data source for meaningful backtesting.
+
+tags:
+  - gold
+  - xauusd
+  - liquidity_sweep
+  - ny_session
+  - ict
+  - v2
+  - experimental
+  - not_yet_runnable
+  - data_blocked
