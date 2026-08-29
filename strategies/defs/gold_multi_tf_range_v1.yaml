@@ -1,0 +1,127 @@
+# ============================================================================
+# V2 DRAFT STRATEGY — NOT YET RUNNABLE
+# ============================================================================
+# This file is written in a *new* V2 format. It will NOT validate against
+# strategies/schema.py (StrategySpec), because that schema is deliberately
+# locked to market=Indian_equities and timeframe=daily (see the
+# `_v1_constraints` check in that file). Gold/XAUUSD and multi-timeframe
+# (1D/4H/1H) analysis are outside that locked V1 contract on purpose.
+#
+# To actually run this, a V2 engine needs to be built:
+#   1. A new Pydantic schema (e.g. strategies/schema_v2.py) that accepts
+#      market=XAUUSD / commodity_fx and timeframe=1H, with a `timeframes`
+#      block for multi-timeframe confirmation.
+#   2. A gold/XAUUSD data pipeline (market_data/ only pulls NSE equities
+#      today) — likely yfinance tickers GC=F or XAUUSD=X, noting Yahoo
+#      limits 1H intraday history to roughly the last ~730 days.
+#   3. A multi-timeframe backtest engine (current engine is single
+#      daily-timeframe only) implementing the rolling-range + top-down
+#      confirmation + risk-based position sizing logic below.
+#
+# This file is the confirmed spec to build against — not a drop-in config.
+# ============================================================================
+
+name: gold_multi_tf_range_v1
+version: "0.1.0"
+
+market: XAUUSD
+asset_class: commodity_fx
+
+universe:
+  type: single_symbol
+  symbol: XAUUSD
+
+# Multi-timeframe top-down read. 15-min/1-min execution was dropped —
+# no free multi-year historical data at that resolution — so 1H is the
+# finest (execution) timeframe.
+timeframes:
+  macro: 1D
+  confirm: 4H
+  execution: 1H
+
+level_definition:
+  method: rolling_high_low
+  lookback_bars:
+    1D: 20
+    4H: 20
+    1H: 20
+  description: >
+    Upper level = highest high over the lookback window on that timeframe.
+    Lower level = lowest low over the lookback window on that timeframe.
+    This is the objective stand-in for manually drawn trend lines/levels.
+
+confirmation:
+  rule: top_down_alignment
+  description: >
+    Price must be near the same side (upper or lower) of its rolling
+    range on 1D and 4H before the 1H entry rule is even evaluated.
+    "Near" threshold: TBD — currently undefined, defaults to requiring
+    same-side agreement only (no distance threshold yet).
+
+entry:
+  condition: range_position_threshold
+  parameters:
+    threshold_pct: 50
+  rule: >
+    On the 1H range: position_pct = (close - lower_level) /
+    (upper_level - lower_level) * 100.
+    If position_pct > 50 -> enter LONG, target = 1H upper_level.
+    If position_pct < 50 -> enter SHORT, target = 1H lower_level.
+
+exit:
+  target: opposite_range_boundary
+  target_rule: 1H upper_level for longs, 1H lower_level for shorts
+  stop_loss:
+    method: risk_based_position_sizing
+    risk_pct_of_capital: 2.0
+    risk_amount: 10000
+    stop_price_rule: >
+      Stop sits at the opposite boundary of the 1H range (below
+      lower_level for longs, above upper_level for shorts) — the point
+      at which the range thesis is invalidated. Position size is solved
+      backward so that a stop-out costs exactly risk_amount.
+
+position:
+  method: risk_based_sizing
+  risk_per_trade_pct: 2.0
+
+execution:
+  signal_time: close
+  execution_time: next_open
+  long_only: false   # this strategy trades both directions
+
+capital: 500000
+capital_note: "Derived from '2% of capital = 10,000' — confirm currency (INR/USD) and that this is correct."
+
+benchmark: XAUUSD_buy_and_hold
+
+period:
+  start: TBD   # bounded by free 1H data availability (~last 2 years via yfinance)
+  end: null
+
+data_source:
+  provider: yfinance
+  symbol_candidates: [GC=F, "XAUUSD=X"]
+  known_limits: >
+    Yahoo Finance caps 1-hour intraday history at roughly 730 days.
+    Daily history is long. True 4H bars are not provided directly and
+    must be resampled from 1H bars (same ~730-day cap applies).
+
+open_questions:
+  - "Near" threshold for top-down confirmation (currently just checks same side, no distance rule)
+  - Confirm capital currency and amount (assumed INR 500,000)
+  - Confirm data source is acceptable, or provide a paid/broker intraday feed
+
+notes: >
+  Discretionary top-down trend/range strategy translated into an explicit,
+  computable rule for backtesting. Not yet validated, not yet executable —
+  this is the confirmed spec the V2 engine will be built against.
+
+tags:
+  - gold
+  - xauusd
+  - multi_timeframe
+  - range
+  - v2
+  - experimental
+  - not_yet_runnable
