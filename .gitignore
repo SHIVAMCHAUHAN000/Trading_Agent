@@ -25,6 +25,8 @@ reports/**
 *.parquet
 *.pkl
 *.h5
+*.db
+data/*.db
 
 # IDE / OS
 .idea/

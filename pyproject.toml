@@ -38,11 +38,20 @@ where = ["."]
 include = [
   "agents*",
   "analytics*",
+  "api*",
   "backtesting*",
+  "brain*",
+  "config*",
   "database*",
+  "live_data*",
   "market_data*",
+  "mcp_tools*",
+  "quant*",
   "reports_ui*",
+  "storage*",
   "strategies*",
+  "telegram_bot*",
+  "tradingview*",
   "validation*",
 ]
 

@@ -1,23 +1,40 @@
-# Trading Agent
+# Personal Live Quant Brain & Trading Agent
 
-**Indian Market Strategy Research & Backtesting Agent**
+> **24/7 Live-Market Quantitative Intelligence & Decision Support Platform**
+> Indian Markets (NSE Indices & Equities) • Global Assets (Gold, Silver, Crude, BTC, FX) • Telegram Bot • MCP Tools • Web Dashboard
 
-Research and validation only. **No trade execution.**
+For research and market intelligence only. **No trade execution.**
 
-## Status
+---
 
-| Stage | Description | Status |
-|---|---|---|
-| 1 | Define the agent (contract) | **Done / APPROVED** |
-| 2 | Set up project | **Done** |
-| 3 | Historical-data system | **Done** |
-| 4 | Strategy specification | **Done** |
-| 5 | Backtesting engine | **Done** |
-| 6 | Performance / risk analytics | **Done** |
-| 7 | Validation & anti-overfitting | **Done** |
-| 8 | AI research agent | **Done** |
-| 9 | Connect through Hermes | **Done** |
-| 10 | Research dashboard / report | **Done** |
+## ⚡ Quick Start: Launch Live Quant Brain
+
+### Native Launch (Windows PowerShell)
+```powershell
+.\start_brain.ps1
+```
+Open **[http://127.0.0.1:8000](http://127.0.0.1:8000)** for the Web Dashboard & AI Quant Chat.
+
+### Native Launch (Linux / macOS)
+```bash
+./start_brain.sh
+```
+
+### Docker Compose
+```bash
+docker compose up --build -d
+```
+
+### Run All 51 Tests
+```powershell
+.\.venv\Scripts\python.exe -m pytest
+```
+
+Full System Guide: [`docs/LIVE_QUANT_BRAIN.md`](docs/LIVE_QUANT_BRAIN.md)
+
+---
+
+## Legacy Research & Backtesting Suite
 
 ## Frozen V1 decisions
 

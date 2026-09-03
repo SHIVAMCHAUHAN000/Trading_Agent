@@ -1,0 +1,26 @@
+version: '3.8'
+
+services:
+  quant-brain:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: live-quant-brain
+    restart: unless-stopped
+    ports:
+      - "8000:8000"
+    env_file:
+      - .env
+    environment:
+      - APP_ENV=production
+      - HOST=0.0.0.0
+      - PORT=8000
+    volumes:
+      # Persist SQLite database and cached historical data
+      - ./data:/app/data
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8000/api/v1/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 15s
