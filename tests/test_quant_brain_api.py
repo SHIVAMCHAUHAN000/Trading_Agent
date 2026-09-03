@@ -4,7 +4,7 @@ Integration tests for FastAPI endpoints, Quant Brain Chat, and TradingView Webho
 
 import pytest
 import httpx
-from api.app import app
+from server.app import app
 from storage.db import init_db
 from config.quant_brain_config import settings
 

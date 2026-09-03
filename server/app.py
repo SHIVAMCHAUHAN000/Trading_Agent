@@ -16,7 +16,7 @@ from fastapi.responses import FileResponse
 
 from config.quant_brain_config import settings
 from storage.db import init_db
-from api.routes import chat, market, tradingview, connections, health, telegram_webhook
+from server.routes import chat, market, tradingview, connections, health, telegram_webhook
 
 logger = logging.getLogger(__name__)
 

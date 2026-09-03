@@ -27,7 +27,7 @@ import uvicorn
 from config.quant_brain_config import settings
 from storage.db import init_db
 from telegram_bot.bot import telegram_bot_runner
-from api.app import app
+from server.app import app
 
 # Logging configuration
 logging.basicConfig(

@@ -12,7 +12,7 @@ ROOT_DIR = Path(__file__).resolve().parent.parent
 if str(ROOT_DIR) not in sys.path:
     sys.path.insert(0, str(ROOT_DIR))
 
-from api.app import app
+from server.app import app
 
 # Vercel looks for `app` in api/index.py
 __all__ = ["app"]
