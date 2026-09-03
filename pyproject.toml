@@ -67,3 +67,7 @@ include = [
 [tool.pytest.ini_options]
 testpaths = ["tests"]
 pythonpath = ["."]
+
+[tool.vercel]
+entrypoint = "main.py"
+
