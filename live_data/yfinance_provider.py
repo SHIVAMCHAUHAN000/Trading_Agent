@@ -12,6 +12,7 @@ from datetime import datetime, timezone
 from typing import Any, Dict, List, Optional
 import pandas as pd
 import yfinance as yf
+import httpx
 
 from config.quant_brain_config import settings
 from live_data.instruments import INSTRUMENTS, resolve_symbol
@@ -27,6 +28,72 @@ class YFinanceDataProvider(MarketDataProvider):
 
     def __init__(self) -> None:
         self.provider_name = "yfinance"
+        self._headers = {
+            "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/122.0.0.0 Safari/537.36",
+            "Accept": "application/json",
+        }
+
+    async def _async_fetch_quote_direct(self, ticker_str: str) -> Dict[str, Any]:
+        """Direct HTTP fetch to Yahoo Finance v8 chart API - fast (<200ms) and immune to scraper throttling."""
+        try:
+            url = f"https://query1.finance.yahoo.com/v8/finance/chart/{ticker_str}?interval=15m&range=1d"
+            async with httpx.AsyncClient(timeout=5.0, follow_redirects=True) as client:
+                resp = await client.get(url, headers=self._headers)
+                if resp.status_code == 200:
+                    payload = resp.json()
+                    result = payload.get("chart", {}).get("result")
+                    if result and len(result) > 0:
+                        meta = result[0].get("meta", {})
+                        price = meta.get("regularMarketPrice")
+                        prev_close = meta.get("chartPreviousClose") or meta.get("previousClose")
+                        day_high = meta.get("regularMarketDayHigh")
+                        day_low = meta.get("regularMarketDayLow")
+                        volume = meta.get("regularMarketVolume", 0)
+
+                        if price is not None:
+                            change = (price - prev_close) if prev_close else 0.0
+                            change_pct = (change / prev_close * 100.0) if (prev_close and prev_close > 0) else 0.0
+                            return {
+                                "price": round(float(price), 2),
+                                "prev_close": round(float(prev_close), 2) if prev_close else round(float(price), 2),
+                                "change": round(float(change), 2),
+                                "change_pct": round(float(change_pct), 2),
+                                "open": round(float(meta.get("regularMarketDayLow", price)), 2),
+                                "high": round(float(day_high), 2) if day_high else round(float(price), 2),
+                                "low": round(float(day_low), 2) if day_low else round(float(price), 2),
+                                "volume": int(volume or 0),
+                                "timestamp": datetime.now(timezone.utc),
+                            }
+        except Exception as e:
+            logger.debug("Direct v8 quote fetch failed for %s: %s", ticker_str, e)
+        return {}
+
+    async def _async_fetch_candles_direct(self, ticker_str: str, interval: str, range_str: str) -> pd.DataFrame:
+        """Direct HTTP fetch for candles from Yahoo Finance v8 chart API."""
+        try:
+            url = f"https://query1.finance.yahoo.com/v8/finance/chart/{ticker_str}?interval={interval}&range={range_str}"
+            async with httpx.AsyncClient(timeout=6.0, follow_redirects=True) as client:
+                resp = await client.get(url, headers=self._headers)
+                if resp.status_code == 200:
+                    payload = resp.json()
+                    result = payload.get("chart", {}).get("result")
+                    if result and len(result) > 0:
+                        res = result[0]
+                        timestamps = res.get("timestamp")
+                        indicators = res.get("indicators", {}).get("quote", [{}])[0]
+                        if timestamps and "close" in indicators and indicators["close"]:
+                            df = pd.DataFrame({
+                                "open": indicators.get("open"),
+                                "high": indicators.get("high"),
+                                "low": indicators.get("low"),
+                                "close": indicators.get("close"),
+                                "volume": indicators.get("volume", [0] * len(timestamps)),
+                            }, index=pd.to_datetime(timestamps, unit="s", utc=True))
+                            df = df.dropna(subset=["close"])
+                            return df
+        except Exception as e:
+            logger.debug("Direct v8 candles fetch failed for %s: %s", ticker_str, e)
+        return pd.DataFrame()
 
     def _get_ticker_str(self, symbol: str) -> str:
         canonical = resolve_symbol(symbol) or symbol.upper()
@@ -118,7 +185,11 @@ class YFinanceDataProvider(MarketDataProvider):
             return cached
 
         ticker_str = self._get_ticker_str(canonical)
-        data = await asyncio.to_thread(self._sync_fetch_quote, ticker_str)
+        # 1. Try high-speed direct Yahoo Finance v8 API (<200ms, cloud-friendly)
+        data = await self._async_fetch_quote_direct(ticker_str)
+        if not data or data.get("price") is None:
+            # 2. Fall back to yfinance python library
+            data = await asyncio.to_thread(self._sync_fetch_quote, ticker_str)
 
         if not data or data.get("price") is None:
             # Fallback: try fetching 15m candle
@@ -202,7 +273,12 @@ class YFinanceDataProvider(MarketDataProvider):
         if cached is not None and isinstance(cached, pd.DataFrame) and not cached.empty:
             return cached
 
-        df = await asyncio.to_thread(self._sync_fetch_candles, ticker_str, interval, period)
+        # 1. Try direct v8 API first
+        range_str = period
+        df = await self._async_fetch_candles_direct(ticker_str, interval, range_str)
+        if df.empty:
+            # 2. Fall back to yfinance library
+            df = await asyncio.to_thread(self._sync_fetch_candles, ticker_str, interval, period)
 
         ttl = settings.DATA_CACHE_TTL_CANDLES if interval not in ("1d", "1wk") else settings.DATA_CACHE_TTL_DAILY
         if not df.empty:

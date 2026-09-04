@@ -1,0 +1,416 @@
+<!DOCTYPE html>
+<html lang="en" class="dark">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Personal Live Quant Brain</title>
+    <!-- Tailwind CSS CDN -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+        tailwind.config = {
+            darkMode: 'class',
+            theme: {
+                extend: {
+                    colors: {
+                        darkBg: '#0a0e17',
+                        cardBg: '#111827',
+                    }
+                }
+            }
+        }
+    </script>
+    <!-- TradingView Lightweight Charts CDN -->
+    <script src="https://unpkg.com/lightweight-charts/dist/lightweight-charts.standalone.production.js"></script>
+    <!-- Custom Glassmorphic Styles -->
+    <link rel="stylesheet" href="/static/css/styles.css">
+</head>
+<body class="bg-[#0a0e17] text-gray-100 min-h-screen flex flex-col font-sans selection:bg-blue-600 selection:text-white">
+
+    <!-- Top Header -->
+    <header class="border-b border-gray-800 bg-[#0d131f]/90 backdrop-blur sticky top-0 z-50">
+        <div class="max-w-7xl mx-auto px-4 py-3 flex flex-col md:flex-row md:items-center md:justify-between gap-3">
+            <div class="flex items-center space-x-3">
+                <div class="w-9 h-9 rounded-xl bg-gradient-to-tr from-blue-600 via-indigo-600 to-cyan-400 flex items-center justify-center text-xl shadow-lg shadow-blue-500/20">
+                    🧠
+                </div>
+                <div>
+                    <div class="flex items-center space-x-2">
+                        <h1 class="text-base font-bold text-white tracking-wide">LIVE QUANT BRAIN</h1>
+                        <span class="text-[10px] px-2 py-0.5 rounded-full bg-blue-900/60 text-blue-300 border border-blue-700/50 font-mono">v1.0.0</span>
+                    </div>
+                    <p class="text-[11px] text-gray-400">Personal Live-Market Quant Intelligence Platform</p>
+                </div>
+            </div>
+
+            <!-- Ticker Ribbon -->
+            <div id="ticker-bar-container" class="flex items-center space-x-2 overflow-x-auto py-1 scrollbar-none max-w-2xl">
+                <!-- Injected via JavaScript -->
+                <div class="text-xs text-gray-500">Connecting to live feeds...</div>
+            </div>
+
+            <!-- Health Status Badge -->
+            <div class="flex items-center space-x-3">
+                <div id="system-health-badge" class="text-xs px-2.5 py-1 rounded-full bg-emerald-950 text-emerald-300 border border-emerald-800 flex items-center space-x-1.5">
+                    <span class="pulse-dot bg-emerald-400"></span>
+                    <span class="font-medium">SYSTEM HEALTHY</span>
+                </div>
+            </div>
+        </div>
+
+        <!-- Navigation Tabs -->
+        <div class="max-w-7xl mx-auto px-4 flex space-x-1 border-t border-gray-800/60 text-sm overflow-x-auto">
+            <button data-tab-target="overview-panel" class="px-4 py-2.5 font-medium text-blue-400 border-b-2 border-blue-500 bg-gray-800/60 flex items-center space-x-1.5 transition">
+                <span>📊</span> <span>Market Overview</span>
+            </button>
+            <button data-tab-target="chat-panel" class="px-4 py-2.5 font-medium text-gray-400 hover:text-gray-200 flex items-center space-x-1.5 transition">
+                <span>💬</span> <span>AI Quant Chat</span>
+            </button>
+            <button data-tab-target="deepdive-panel" class="px-4 py-2.5 font-medium text-gray-400 hover:text-gray-200 flex items-center space-x-1.5 transition">
+                <span>🔬</span> <span>Instrument Deep Dive</span>
+            </button>
+            <button data-tab-target="watchlist-panel" class="px-4 py-2.5 font-medium text-gray-400 hover:text-gray-200 flex items-center space-x-1.5 transition">
+                <span>📋</span> <span>Watchlist & Setups</span>
+            </button>
+            <button data-tab-target="connections-panel" class="px-4 py-2.5 font-medium text-gray-400 hover:text-gray-200 flex items-center space-x-1.5 transition">
+                <span>🔌</span> <span>Connections & Health</span>
+            </button>
+        </div>
+    </header>
+
+    <!-- Main Container -->
+    <main class="flex-1 max-w-7xl w-full mx-auto p-4 md:p-6 space-y-6">
+
+        <!-- ================= TAB 1: MARKET OVERVIEW ================= -->
+        <section id="overview-panel" class="tab-panel space-y-6">
+            <!-- Market Breadth & Macro Row -->
+            <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+                <div class="glass-panel p-4 flex flex-col justify-between">
+                    <div class="flex justify-between items-center mb-2">
+                        <span class="text-xs uppercase tracking-wider text-gray-400 font-semibold">NSE Market Breadth</span>
+                        <span class="text-[10px] text-gray-500">Benchmark Universe</span>
+                    </div>
+                    <div id="breadth-widget">
+                        <div class="text-xs text-gray-400">Loading breadth data...</div>
+                    </div>
+                </div>
+
+                <div class="glass-panel p-4 flex flex-col justify-between">
+                    <div class="flex justify-between items-center mb-2">
+                        <span class="text-xs uppercase tracking-wider text-gray-400 font-semibold">Session Status (IST)</span>
+                        <span class="text-[10px] text-emerald-400">Time-Zone Aware</span>
+                    </div>
+                    <div class="space-y-1 text-xs">
+                        <div class="flex justify-between text-gray-300">
+                            <span>NSE Market Hours:</span> <span class="font-mono text-gray-400">09:15 - 15:30 IST</span>
+                        </div>
+                        <div class="flex justify-between text-gray-300">
+                            <span>Pre-Market Session:</span> <span class="font-mono text-gray-400">09:00 - 09:15 IST</span>
+                        </div>
+                        <div class="flex justify-between text-gray-300">
+                            <span>Crypto / Forex:</span> <span class="font-mono text-emerald-400">24/7 & 24/5 Active</span>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="glass-panel p-4 flex flex-col justify-between">
+                    <div class="flex justify-between items-center mb-2">
+                        <span class="text-xs uppercase tracking-wider text-gray-400 font-semibold">Quant Brain Engine</span>
+                        <span class="text-[10px] text-blue-400">Shared API</span>
+                    </div>
+                    <div class="text-xs text-gray-300 space-y-1">
+                        <p>Directly synchronized with Telegram Bot and MCP Tool layer.</p>
+                        <p class="text-gray-400 text-[11px]">Zero hallucinated prices. Strict evidence grounding.</p>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Active Market Cards Grid -->
+            <div>
+                <div class="flex justify-between items-center mb-3">
+                    <h2 class="text-base font-bold text-white tracking-wide">Tracked Live Instruments</h2>
+                    <span class="text-xs text-gray-400">Auto-refreshes every 20s</span>
+                </div>
+                <div id="market-cards-grid" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
+                    <div class="glass-panel p-4 text-xs text-gray-500">Loading market tickers...</div>
+                </div>
+            </div>
+        </section>
+
+        <!-- ================= TAB 2: AI QUANT CHAT ================= -->
+        <section id="chat-panel" class="tab-panel hidden space-y-4">
+            <div class="glass-panel flex flex-col h-[75vh]">
+                <!-- Chat Header -->
+                <div class="p-4 border-b border-gray-800 flex justify-between items-center bg-gray-900/40">
+                    <div class="flex items-center space-x-2">
+                        <span class="text-lg">🤖</span>
+                        <div>
+                            <h3 class="text-sm font-bold text-white">Live Quant Analyst</h3>
+                            <p class="text-[11px] text-gray-400">Continuous context memory. Ask follow-up questions naturally.</p>
+                        </div>
+                    </div>
+                    <div class="flex items-center space-x-2 text-xs">
+                        <span class="px-2 py-1 rounded bg-blue-950 text-blue-300 border border-blue-800 text-[11px]">Active Session</span>
+                    </div>
+                </div>
+
+                <!-- Prompt Suggestions Bar -->
+                <div class="px-4 py-2 bg-gray-950/40 border-b border-gray-800/50 flex space-x-2 overflow-x-auto text-xs scrollbar-none">
+                    <span class="text-gray-500 whitespace-nowrap self-center text-[11px]">Try asking:</span>
+                    <button class="px-2.5 py-1 rounded-full bg-gray-800 hover:bg-gray-700 text-gray-300 border border-gray-700 whitespace-nowrap text-[11px] transition"
+                            onclick="sendPromptToChat('What is NIFTY doing right now?')">
+                        What is NIFTY doing?
+                    </button>
+                    <button class="px-2.5 py-1 rounded-full bg-gray-800 hover:bg-gray-700 text-gray-300 border border-gray-700 whitespace-nowrap text-[11px] transition"
+                            onclick="sendPromptToChat('Why?')">
+                        Why?
+                    </button>
+                    <button class="px-2.5 py-1 rounded-full bg-gray-800 hover:bg-gray-700 text-gray-300 border border-gray-700 whitespace-nowrap text-[11px] transition"
+                            onclick="sendPromptToChat('Where is liquidity?')">
+                        Where is liquidity?
+                    </button>
+                    <button class="px-2.5 py-1 rounded-full bg-gray-800 hover:bg-gray-700 text-gray-300 border border-gray-700 whitespace-nowrap text-[11px] transition"
+                            onclick="sendPromptToChat('What is the 15-minute trend?')">
+                        15m trend?
+                    </button>
+                    <button class="px-2.5 py-1 rounded-full bg-gray-800 hover:bg-gray-700 text-gray-300 border border-gray-700 whitespace-nowrap text-[11px] transition"
+                            onclick="sendPromptToChat('Is there a high quality setup developing?')">
+                        Is there a setup?
+                    </button>
+                    <button class="px-2.5 py-1 rounded-full bg-gray-800 hover:bg-gray-700 text-gray-300 border border-gray-700 whitespace-nowrap text-[11px] transition"
+                            onclick="sendPromptToChat('Summarize today\'s market briefing')">
+                        Market Briefing
+                    </button>
+                    <button class="px-2.5 py-1 rounded-full bg-gray-800 hover:bg-gray-700 text-gray-300 border border-gray-700 whitespace-nowrap text-[11px] transition"
+                            onclick="sendPromptToChat('Compare NIFTY and BANKNIFTY')">
+                        Compare NIFTY vs BANKNIFTY
+                    </button>
+                </div>
+
+                <!-- Messages Container -->
+                <div id="chat-messages-container" class="flex-1 p-4 overflow-y-auto space-y-3">
+                    <div class="flex flex-col items-start mb-4">
+                        <div class="chat-assistant max-w-[85%] md:max-w-[75%] p-3.5 text-gray-200">
+                            <div class="text-sm leading-relaxed">
+                                👋 Welcome to your <strong>Personal Live Quant Brain</strong>.<br/>
+                                You can ask me about live prices, market structure, liquidity pools, momentum, volume profiles, market drivers, or high-probability setups across Indian markets (NIFTY, BANKNIFTY, Equities) and global assets (Gold, Silver, Crude, BTC).<br/><br/>
+                                I maintain complete follow-up context memory — for example, ask <em>"What is NIFTY doing?"</em> followed by <em>"Why?"</em> and <em>"Where is liquidity?"</em>.
+                            </div>
+                        </div>
+                        <span class="text-[10px] text-gray-500 mt-1 px-1">Live Quant Brain</span>
+                    </div>
+                </div>
+
+                <!-- Input Box -->
+                <div class="p-4 border-t border-gray-800 bg-gray-900/60">
+                    <div class="flex space-x-2">
+                        <input id="chat-input" type="text"
+                               placeholder="Ask anything (e.g. 'What is NIFTY doing?', 'Where is liquidity?', 'Why is gold moving?')..."
+                               class="flex-1 bg-gray-950 border border-gray-800 focus:border-blue-500 rounded-xl px-4 py-2.5 text-sm text-gray-100 placeholder-gray-500 focus:outline-none transition">
+                        <button id="chat-send-btn"
+                                class="px-5 py-2.5 bg-blue-600 hover:bg-blue-500 text-white font-medium text-sm rounded-xl shadow-lg shadow-blue-600/30 transition flex items-center space-x-1.5">
+                            <span>Send</span>
+                            <span>➔</span>
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- ================= TAB 3: INSTRUMENT DEEP DIVE ================= -->
+        <section id="deepdive-panel" class="tab-panel hidden space-y-6">
+            <!-- Deep Dive Header & Controls -->
+            <div class="glass-panel p-4 flex flex-col md:flex-row md:items-center justify-between gap-4">
+                <div>
+                    <h2 id="deepdive-symbol-title" class="text-xl font-bold text-white">NIFTY Deep Dive</h2>
+                    <div class="flex items-center space-x-3 mt-1">
+                        <span id="dd-price" class="text-2xl font-mono font-bold text-white">--</span>
+                        <span id="dd-change" class="text-sm font-mono text-gray-400">--</span>
+                        <span id="dd-regime" class="text-xs px-2 py-0.5 rounded bg-gray-800 border border-gray-700 font-mono text-gray-300">RANGE</span>
+                    </div>
+                </div>
+
+                <!-- Timeframe Selection Buttons -->
+                <div class="flex items-center space-x-1 bg-gray-950 p-1 rounded-xl border border-gray-800 text-xs">
+                    <button class="tf-btn px-3 py-1.5 rounded-lg bg-gray-800 text-gray-400 hover:text-white transition" onclick="changeTimeframe('5m')">5m</button>
+                    <button class="tf-btn px-3 py-1.5 rounded-lg bg-blue-600 text-white transition" onclick="changeTimeframe('15m')">15m</button>
+                    <button class="tf-btn px-3 py-1.5 rounded-lg bg-gray-800 text-gray-400 hover:text-white transition" onclick="changeTimeframe('1h')">1h</button>
+                    <button class="tf-btn px-3 py-1.5 rounded-lg bg-gray-800 text-gray-400 hover:text-white transition" onclick="changeTimeframe('1d')">1d</button>
+                </div>
+            </div>
+
+            <!-- Candlestick Chart -->
+            <div class="glass-panel p-4">
+                <div class="flex justify-between items-center mb-2">
+                    <span class="text-xs uppercase tracking-wider text-gray-400 font-semibold">Candlestick Chart</span>
+                    <span class="text-xs text-gray-500">Live OHLCV</span>
+                </div>
+                <div id="chart-container" class="w-full h-[380px] rounded-lg overflow-hidden bg-[#0d131f]">
+                    <!-- Chart injected via JS -->
+                </div>
+            </div>
+
+            <!-- Quantitative Analytics Grid -->
+            <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+                <!-- Liquidity Pools -->
+                <div class="glass-panel p-4">
+                    <h3 class="text-sm font-bold text-white mb-2 flex items-center space-x-1.5">
+                        <span>💧</span> <span>Observable Liquidity Pools</span>
+                    </h3>
+                    <div id="dd-liquidity-pools" class="space-y-2">
+                        <p class="text-xs text-gray-500">Loading liquidity pools...</p>
+                    </div>
+                </div>
+
+                <!-- Momentum & Volatility -->
+                <div class="glass-panel p-4 space-y-3">
+                    <h3 class="text-sm font-bold text-white flex items-center space-x-1.5">
+                        <span>📦</span> <span>Momentum & Volatility</span>
+                    </h3>
+                    <div class="space-y-2 text-xs">
+                        <div class="p-2.5 bg-gray-950/60 rounded-lg border border-gray-800">
+                            <span id="dd-rsi" class="font-mono text-gray-200">RSI: --</span>
+                        </div>
+                        <div class="p-2.5 bg-gray-950/60 rounded-lg border border-gray-800">
+                            <span id="dd-rvol" class="font-mono text-gray-200">RVOL: --</span>
+                        </div>
+                        <div class="p-2.5 bg-gray-950/60 rounded-lg border border-gray-800">
+                            <span id="dd-atr" class="font-mono text-gray-200">ATR: --</span>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Setup Analysis Box -->
+                <div class="glass-panel p-4">
+                    <h3 class="text-sm font-bold text-white mb-2 flex items-center space-x-1.5">
+                        <span>🎯</span> <span>Systematic Setup Evaluator</span>
+                    </h3>
+                    <div id="dd-setup-box" class="text-xs">
+                        <p class="text-gray-500">Evaluating confluence...</p>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- ================= TAB 4: WATCHLIST & SETUPS ================= -->
+        <section id="watchlist-panel" class="tab-panel hidden space-y-6">
+            <div class="glass-panel p-4">
+                <div class="flex flex-col md:flex-row md:items-center justify-between gap-3 mb-4">
+                    <div>
+                        <h2 class="text-base font-bold text-white">Active Watchlist</h2>
+                        <p class="text-xs text-gray-400">Ranked market overview based on verified live feeds</p>
+                    </div>
+                    <div class="flex items-center space-x-2">
+                        <input id="add-watchlist-input" type="text" placeholder="Add symbol (e.g. INFY)"
+                               class="bg-gray-950 border border-gray-800 focus:border-blue-500 rounded-lg px-3 py-1.5 text-xs text-white focus:outline-none">
+                        <button id="add-watchlist-btn" class="px-3 py-1.5 bg-blue-600 hover:bg-blue-500 text-white rounded-lg text-xs font-medium transition">
+                            + Add
+                        </button>
+                    </div>
+                </div>
+
+                <div class="overflow-x-auto">
+                    <table class="w-full text-left text-sm">
+                        <thead class="bg-gray-950/70 text-gray-400 uppercase text-[11px] tracking-wider border-b border-gray-800">
+                            <tr>
+                                <th class="py-2.5 px-4">Symbol</th>
+                                <th class="py-2.5 px-4">Price</th>
+                                <th class="py-2.5 px-4">24h Change</th>
+                                <th class="py-2.5 px-4">Feed Status</th>
+                                <th class="py-2.5 px-4 text-right">Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody id="watchlist-table-body">
+                            <!-- Injected via JavaScript -->
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </section>
+
+        <!-- ================= TAB 5: CONNECTIONS & HEALTH ================= -->
+        <section id="connections-panel" class="tab-panel hidden space-y-6">
+            <!-- Server Health Cards -->
+            <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+                <div class="glass-panel p-4">
+                    <span class="text-xs text-gray-400 uppercase tracking-wider block mb-1">Server Uptime</span>
+                    <span id="uptime-stat" class="text-xl font-bold font-mono text-white">--</span>
+                </div>
+                <div class="glass-panel p-4">
+                    <span class="text-xs text-gray-400 uppercase tracking-wider block mb-1">Process Memory</span>
+                    <span id="memory-stat" class="text-xl font-bold font-mono text-white">--</span>
+                </div>
+                <div class="glass-panel p-4">
+                    <span class="text-xs text-gray-400 uppercase tracking-wider block mb-1">Market Data Feed</span>
+                    <span id="md-status-desc" class="text-sm font-medium text-emerald-400 block truncate">YFinance Connected</span>
+                </div>
+                <div class="glass-panel p-4">
+                    <span class="text-xs text-gray-400 uppercase tracking-wider block mb-1">Telegram Bot</span>
+                    <span id="tg-status-desc" class="text-sm font-medium text-blue-400 block truncate">Checking...</span>
+                </div>
+            </div>
+
+            <!-- TradingView & AI Engine Status -->
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div class="glass-panel p-4">
+                    <h3 class="text-sm font-bold text-white mb-2 flex items-center space-x-1.5">
+                        <span>📈</span> <span>TradingView Webhook Integration</span>
+                    </h3>
+                    <p id="tv-status-desc" class="text-xs text-gray-300 mb-2">Listening on /api/v1/tradingview/webhook</p>
+                    <div class="p-2.5 bg-gray-950/70 rounded border border-gray-800 text-[11px] font-mono text-gray-400">
+                        Method: POST<br/>
+                        Header: X-TradingView-Secret: [Configured in .env]<br/>
+                        Payload: {"symbol": "NIFTY", "timeframe": "15m", "signal": "BOS_BULLISH", "price": 24850}
+                    </div>
+                </div>
+
+                <div class="glass-panel p-4">
+                    <h3 class="text-sm font-bold text-white mb-2 flex items-center space-x-1.5">
+                        <span>🧠</span> <span>AI & Quant Reasoning Backend</span>
+                    </h3>
+                    <p id="ai-status-desc" class="text-xs text-gray-300 mb-2">Provider: Auto</p>
+                    <p class="text-xs text-gray-400 leading-relaxed">
+                        Deterministic quantitative reasoning is active alongside Gemini/OpenAI if configured.
+                        Rigorous evidence-based explanations with zero hallucination guarantee.
+                    </p>
+                </div>
+            </div>
+
+            <!-- MCP Tools Registry Table -->
+            <div class="glass-panel p-4">
+                <div class="flex justify-between items-center mb-3">
+                    <h3 class="text-sm font-bold text-white flex items-center space-x-1.5">
+                        <span>⚡</span> <span>Model Context Protocol (MCP) Registered Tools</span>
+                    </h3>
+                    <span class="text-xs text-blue-400">13 Tools Active</span>
+                </div>
+
+                <div class="overflow-x-auto">
+                    <table class="w-full text-left text-xs">
+                        <thead class="bg-gray-950/80 text-gray-400 uppercase text-[10px] tracking-wider border-b border-gray-800">
+                            <tr>
+                                <th class="py-2 px-3">Tool Name</th>
+                                <th class="py-2 px-3">Description</th>
+                                <th class="py-2 px-3 text-center">Status</th>
+                                <th class="py-2 px-3 text-right">Invocations</th>
+                                <th class="py-2 px-3 text-right">Latency</th>
+                            </tr>
+                        </thead>
+                        <tbody id="mcp-tools-table">
+                            <!-- Injected via JavaScript -->
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </section>
+
+    </main>
+
+    <!-- Footer -->
+    <footer class="border-t border-gray-800/80 py-3 text-center text-xs text-gray-500 bg-[#0d131f]/50">
+        Personal Live Quant Brain &copy; 2026 &bull; Market intelligence and decision support only &bull; No automated trade execution
+    </footer>
+
+    <!-- App Logic Script -->
+    <script src="/static/js/app.js"></script>
+</body>
+</html>

@@ -59,7 +59,14 @@ function initNavigation() {
 async function loadMarketSummary() {
     try {
         const res = await fetch(`${API_BASE}/api/v1/market/summary`);
-        if (!res.ok) return;
+        if (!res.ok) {
+            console.error("Market summary response error:", res.status, res.statusText);
+            const container = document.getElementById("ticker-bar-container");
+            if (container && (!container.children || container.innerText.includes("Connecting"))) {
+                container.innerHTML = `<div class="text-xs text-amber-400 font-mono px-2 py-1 bg-amber-950/40 rounded border border-amber-800/40">⚠️ Feed returned HTTP ${res.status}. Reconnecting...</div>`;
+            }
+            return;
+        }
         const data = await res.json();
         
         renderTickerBar(data.instruments || []);
@@ -67,6 +74,10 @@ async function loadMarketSummary() {
         renderMarketBreadth(data.breadth || {});
     } catch (e) {
         console.error("Failed to load market summary:", e);
+        const container = document.getElementById("ticker-bar-container");
+        if (container && (!container.children || container.innerText.includes("Connecting"))) {
+            container.innerHTML = `<div class="text-xs text-rose-400 font-mono px-2 py-1 bg-rose-950/40 rounded border border-rose-800/40">⚠️ Network issue: ${e.message || 'Fetch failed'}. Retrying...</div>`;
+        }
     }
 }
 
