@@ -6,7 +6,10 @@ from __future__ import annotations
 
 import time
 import os
-import psutil
+try:
+    import psutil
+except ImportError:
+    psutil = None
 from typing import Any, Dict
 from fastapi import APIRouter
 from config.quant_brain_config import settings
@@ -34,11 +37,12 @@ async def health_check() -> Dict[str, Any]:
 
     # Process metrics
     mem_mb = 0.0
-    try:
-        proc = psutil.Process(os.getpid())
-        mem_mb = round(proc.memory_info().rss / (1024 * 1024), 2)
-    except Exception:
-        pass
+    if psutil is not None:
+        try:
+            proc = psutil.Process(os.getpid())
+            mem_mb = round(proc.memory_info().rss / (1024 * 1024), 2)
+        except Exception:
+            pass
 
     return {
         "status": "HEALTHY" if db_ok else "DEGRADED",

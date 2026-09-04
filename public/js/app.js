@@ -1,0 +1,613 @@
+/**
+ * Personal Live Quant Brain Frontend Application
+ * Pure modern vanilla async JavaScript
+ */
+
+const API_BASE = "";
+let activeSessionId = "web_session_" + Math.random().toString(36).substring(2, 9);
+let currentInstrument = "NIFTY";
+let currentTimeframe = "15m";
+let chartInstance = null;
+let candleSeries = null;
+
+// Initialize on DOM load
+document.addEventListener("DOMContentLoaded", () => {
+    initNavigation();
+    initChat();
+    initWatchlist();
+    loadMarketSummary();
+    loadInstrumentDeepDive("NIFTY");
+    loadConnections();
+    loadHealth();
+
+    // Auto-refresh summary every 20 seconds
+    setInterval(() => {
+        loadMarketSummary();
+        loadHealth();
+    }, 20000);
+});
+
+// --- Tab Navigation ---
+function initNavigation() {
+    const navButtons = document.querySelectorAll("[data-tab-target]");
+    navButtons.forEach(btn => {
+        btn.addEventListener("click", () => {
+            const target = btn.getAttribute("data-tab-target");
+            
+            // Update button states
+            navButtons.forEach(b => {
+                b.classList.remove("text-blue-400", "border-b-2", "border-blue-500", "bg-gray-800/60");
+                b.classList.add("text-gray-400");
+            });
+            btn.classList.remove("text-gray-400");
+            btn.classList.add("text-blue-400", "border-b-2", "border-blue-500", "bg-gray-800/60");
+
+            // Switch view panels
+            document.querySelectorAll(".tab-panel").forEach(p => p.classList.add("hidden"));
+            const activePanel = document.getElementById(target);
+            if (activePanel) {
+                activePanel.classList.remove("hidden");
+                if (target === "deepdive-panel" && chartInstance) {
+                    setTimeout(() => chartInstance.timeScale().fitContent(), 100);
+                }
+            }
+        });
+    });
+}
+
+// --- Market Summary & Tickers ---
+async function loadMarketSummary() {
+    try {
+        const res = await fetch(`${API_BASE}/api/v1/market/summary`);
+        if (!res.ok) return;
+        const data = await res.json();
+        
+        renderTickerBar(data.instruments || []);
+        renderMarketGrid(data.instruments || []);
+        renderMarketBreadth(data.breadth || {});
+    } catch (e) {
+        console.error("Failed to load market summary:", e);
+    }
+}
+
+function renderTickerBar(instruments) {
+    const container = document.getElementById("ticker-bar-container");
+    if (!container) return;
+
+    container.innerHTML = instruments.map(inst => {
+        const isUp = (inst.change || 0) >= 0;
+        const colorClass = isUp ? "text-emerald-400" : "text-rose-400";
+        const sign = isUp ? "+" : "";
+        return `
+            <div class="ticker-pill flex items-center space-x-2 px-3 py-1.5 bg-gray-900/80 border border-gray-800 rounded-lg cursor-pointer text-xs flex-shrink-0"
+                 onclick="selectInstrument('${inst.symbol}')">
+                <span class="font-bold text-gray-200">${inst.symbol}</span>
+                <span class="font-mono text-gray-300">${inst.price || 'N/A'}</span>
+                <span class="font-mono ${colorClass}">${sign}${inst.change_pct}%</span>
+            </div>
+        `;
+    }).join("");
+}
+
+function renderMarketGrid(instruments) {
+    const grid = document.getElementById("market-cards-grid");
+    if (!grid) return;
+
+    grid.innerHTML = instruments.map(inst => {
+        const isUp = (inst.change || 0) >= 0;
+        const colorClass = isUp ? "text-emerald-400" : "text-rose-400";
+        const sign = isUp ? "+" : "";
+        const isOpen = inst.session_state === "OPEN";
+        const badgeColor = isOpen ? "bg-emerald-950 text-emerald-300 border-emerald-800" : "bg-gray-800 text-gray-400 border-gray-700";
+
+        return `
+            <div class="glass-panel p-4 flex flex-col justify-between hover:border-blue-500/50 cursor-pointer"
+                 onclick="selectInstrument('${inst.symbol}')">
+                <div>
+                    <div class="flex justify-between items-start mb-2">
+                        <div>
+                            <span class="font-bold text-lg text-white">${inst.symbol}</span>
+                            <span class="block text-xs text-gray-400 truncate max-w-[140px]">${inst.name}</span>
+                        </div>
+                        <span class="text-[10px] px-2 py-0.5 rounded-full border ${badgeColor}">
+                            ${inst.session_state}
+                        </span>
+                    </div>
+                    <div class="flex items-baseline space-x-2 my-2">
+                        <span class="text-2xl font-bold font-mono text-white">${inst.price || 'N/A'}</span>
+                        <span class="text-xs text-gray-400">${inst.currency}</span>
+                    </div>
+                    <div class="flex items-center space-x-2 text-sm font-mono ${colorClass}">
+                        <span>${sign}${inst.change}</span>
+                        <span>(${sign}${inst.change_pct}%)</span>
+                    </div>
+                </div>
+                <div class="mt-4 pt-2 border-t border-gray-800/80 flex justify-between items-center text-xs text-gray-400">
+                    <span>H: ${inst.high || '-'} | L: ${inst.low || '-'}</span>
+                    <button class="px-2 py-1 bg-blue-600/20 text-blue-400 hover:bg-blue-600 hover:text-white rounded transition text-[11px]"
+                            onclick="event.stopPropagation(); sendPromptToChat('Analyze ${inst.symbol}')">
+                        Ask Quant
+                    </button>
+                </div>
+            </div>
+        `;
+    }).join("");
+}
+
+function renderMarketBreadth(breadth) {
+    const container = document.getElementById("breadth-widget");
+    if (!container) return;
+
+    const adv = breadth.advances || 0;
+    const dec = breadth.declines || 0;
+    const ratio = breadth.adv_dec_ratio || 1.0;
+    const total = adv + dec || 1;
+    const advPct = Math.round((adv / total) * 100);
+
+    container.innerHTML = `
+        <div class="flex justify-between items-center text-xs mb-1">
+            <span class="text-emerald-400 font-bold">${adv} Advances</span>
+            <span class="text-gray-400 font-mono">A/D: ${ratio}</span>
+            <span class="text-rose-400 font-bold">${dec} Declines</span>
+        </div>
+        <div class="w-full h-2 bg-gray-800 rounded-full overflow-hidden flex">
+            <div class="h-full bg-emerald-500" style="width: ${advPct}%"></div>
+            <div class="h-full bg-rose-500" style="width: ${100 - advPct}%"></div>
+        </div>
+        <div class="text-[11px] text-gray-400 mt-1 truncate">
+            Sentiment: <span class="text-gray-200 font-medium">${breadth.sentiment || 'Neutral'}</span>
+        </div>
+    `;
+}
+
+// --- Deep Dive View & Charts ---
+async function selectInstrument(symbol) {
+    currentInstrument = symbol;
+    
+    // Switch tab to deep dive
+    const deepDiveBtn = document.querySelector("[data-tab-target='deepdive-panel']");
+    if (deepDiveBtn) deepDiveBtn.click();
+
+    await loadInstrumentDeepDive(symbol);
+}
+
+async function loadInstrumentDeepDive(symbol) {
+    currentInstrument = symbol;
+    const headerTitle = document.getElementById("deepdive-symbol-title");
+    if (headerTitle) headerTitle.innerText = `${symbol} Deep Dive`;
+
+    try {
+        // Load analysis and candles concurrently
+        const [analysisRes, candlesRes] = await Promise.all([
+            fetch(`${API_BASE}/api/v1/market/instrument/${symbol}?timeframe=${currentTimeframe}`),
+            fetch(`${API_BASE}/api/v1/market/candles/${symbol}?interval=${currentTimeframe}`)
+        ]);
+
+        if (analysisRes.ok) {
+            const data = await analysisRes.json();
+            renderDeepDiveMetrics(data);
+        }
+
+        if (candlesRes.ok) {
+            const candleData = await candlesRes.json();
+            renderCandleChart(candleData.candles || []);
+        }
+    } catch (e) {
+        console.error("Error loading instrument deep dive:", e);
+    }
+}
+
+function renderDeepDiveMetrics(data) {
+    const q = data.quote || {};
+    const s = data.structure || {};
+    const l = data.liquidity || {};
+    const m = data.momentum || {};
+    const v = data.volume || {};
+    const vol = data.volatility || {};
+    const setup = data.setup || {};
+
+    // Top metrics
+    const priceEl = document.getElementById("dd-price");
+    if (priceEl) priceEl.innerText = `${q.price || 'N/A'} ${q.currency || 'INR'}`;
+
+    const chgEl = document.getElementById("dd-change");
+    if (chgEl) {
+        const sign = (q.change || 0) >= 0 ? "+" : "";
+        chgEl.innerText = `${sign}${q.change || 0} (${sign}${q.change_pct || 0}%)`;
+        chgEl.className = (q.change || 0) >= 0 ? "text-emerald-400 font-mono" : "text-rose-400 font-mono";
+    }
+
+    const regimeEl = document.getElementById("dd-regime");
+    if (regimeEl) regimeEl.innerText = s.regime || "RANGE";
+
+    const rsiEl = document.getElementById("dd-rsi");
+    if (rsiEl) rsiEl.innerText = `RSI: ${m.rsi || 50} (${m.rsi_state || 'Neutral'})`;
+
+    const rvolEl = document.getElementById("dd-rvol");
+    if (rvolEl) rvolEl.innerText = `RVOL: ${v.rvol || 1.0}x (${v.state || 'Average'})`;
+
+    const atrEl = document.getElementById("dd-atr");
+    if (atrEl) atrEl.innerText = `ATR: ${vol.atr || 'N/A'} (${vol.regime || 'Normal'})`;
+
+    // Liquidity Pools
+    const lqContainer = document.getElementById("dd-liquidity-pools");
+    if (lqContainer) {
+        const upside = (l.upside_liquidity || []).map(p => `
+            <div class="flex justify-between items-center py-1 text-xs border-b border-gray-800/50">
+                <span class="text-emerald-400 font-mono">${p.level}</span>
+                <span class="text-gray-400">${p.type}</span>
+                <span class="text-gray-500 font-mono">+${p.distance_pct}%</span>
+            </div>
+        `).join("") || "<p class='text-xs text-gray-500'>No immediate overhead pools</p>";
+
+        const downside = (l.downside_liquidity || []).map(p => `
+            <div class="flex justify-between items-center py-1 text-xs border-b border-gray-800/50">
+                <span class="text-rose-400 font-mono">${p.level}</span>
+                <span class="text-gray-400">${p.type}</span>
+                <span class="text-gray-500 font-mono">-${p.distance_pct}%</span>
+            </div>
+        `).join("") || "<p class='text-xs text-gray-500'>No immediate downside pools</p>";
+
+        lqContainer.innerHTML = `
+            <div class="mb-2">
+                <span class="text-[11px] uppercase tracking-wider text-gray-400 font-semibold">Overhead Buy-Stops</span>
+                ${upside}
+            </div>
+            <div>
+                <span class="text-[11px] uppercase tracking-wider text-gray-400 font-semibold">Downside Sell-Stops</span>
+                ${downside}
+            </div>
+        `;
+    }
+
+    // Setup Status
+    const setupContainer = document.getElementById("dd-setup-box");
+    if (setupContainer) {
+        const badgeColor = setup.direction === "Long bias" ? "text-emerald-400 border-emerald-800" :
+                           (setup.direction === "Short bias" ? "text-rose-400 border-rose-800" : "text-gray-400 border-gray-800");
+        setupContainer.innerHTML = `
+            <div class="flex justify-between items-center mb-2">
+                <span class="font-bold text-white text-sm">Setup: ${setup.status || 'No setup'}</span>
+                <span class="px-2 py-0.5 rounded text-xs border ${badgeColor}">${setup.direction || 'Neutral'}</span>
+            </div>
+            <p class="text-xs text-gray-300 mb-1"><strong>Trigger:</strong> ${setup.trigger || 'N/A'}</p>
+            <p class="text-xs text-gray-400 mb-1"><strong>Invalidation:</strong> ${setup.invalidation || 'N/A'}</p>
+            <p class="text-xs text-gray-400"><strong>Confidence:</strong> ${setup.confidence || 'Low'} (${setup.confidence_reason || ''})</p>
+        `;
+    }
+}
+
+function renderCandleChart(candles) {
+    const container = document.getElementById("chart-container");
+    if (!container) return;
+
+    container.innerHTML = "";
+
+    // If Lightweight Charts library is loaded from CDN
+    if (window.LightweightCharts) {
+        chartInstance = LightweightCharts.createChart(container, {
+            width: container.clientWidth,
+            height: 380,
+            layout: {
+                background: { color: "#0d131f" },
+                textColor: "#9ca3af",
+            },
+            grid: {
+                vertLines: { color: "rgba(255, 255, 255, 0.04)" },
+                horzLines: { color: "rgba(255, 255, 255, 0.04)" },
+            },
+            crosshair: {
+                mode: LightweightCharts.CrosshairMode.Normal,
+            },
+            rightPriceScale: {
+                borderColor: "rgba(255, 255, 255, 0.1)",
+            },
+            timeScale: {
+                borderColor: "rgba(255, 255, 255, 0.1)",
+                timeVisible: true,
+            },
+        });
+
+        candleSeries = chartInstance.addCandlestickSeries({
+            upColor: "#10b981",
+            downColor: "#ef4444",
+            borderDownColor: "#ef4444",
+            borderUpColor: "#10b981",
+            wickDownColor: "#ef4444",
+            wickUpColor: "#10b981",
+        });
+
+        const formatted = candles.map(c => ({
+            time: c.time,
+            open: c.open,
+            high: c.high,
+            low: c.low,
+            close: c.close,
+        }));
+
+        candleSeries.setData(formatted);
+        chartInstance.timeScale().fitContent();
+
+        window.addEventListener("resize", () => {
+            if (chartInstance && container) {
+                chartInstance.applyOptions({ width: container.clientWidth });
+            }
+        });
+    } else {
+        // Fallback simple SVG sparkline/candlestick representation
+        container.innerHTML = `
+            <div class="h-full flex items-center justify-center text-gray-500 text-sm">
+                <p>Interactive chart active (${candles.length} candles loaded)</p>
+            </div>
+        `;
+    }
+}
+
+function changeTimeframe(tf) {
+    currentTimeframe = tf;
+    document.querySelectorAll(".tf-btn").forEach(btn => {
+        if (btn.innerText.toLowerCase() === tf.toLowerCase()) {
+            btn.classList.add("bg-blue-600", "text-white");
+            btn.classList.remove("bg-gray-800", "text-gray-400");
+        } else {
+            btn.classList.remove("bg-blue-600", "text-white");
+            btn.classList.add("bg-gray-800", "text-gray-400");
+        }
+    });
+    loadInstrumentDeepDive(currentInstrument);
+}
+
+// --- AI Quant Chat ---
+function initChat() {
+    const input = document.getElementById("chat-input");
+    const sendBtn = document.getElementById("chat-send-btn");
+
+    if (sendBtn && input) {
+        sendBtn.addEventListener("click", () => handleSendMessage());
+        input.addEventListener("keydown", (e) => {
+            if (e.key === "Enter" && !e.shiftKey) {
+                e.preventDefault();
+                handleSendMessage();
+            }
+        });
+    }
+}
+
+function sendPromptToChat(promptText) {
+    const chatBtn = document.querySelector("[data-tab-target='chat-panel']");
+    if (chatBtn) chatBtn.click();
+
+    const input = document.getElementById("chat-input");
+    if (input) {
+        input.value = promptText;
+        handleSendMessage();
+    }
+}
+
+async function handleSendMessage() {
+    const input = document.getElementById("chat-input");
+    const text = input ? input.value.trim() : "";
+    if (!text) return;
+
+    input.value = "";
+    appendChatMessage("user", text);
+
+    // Typing indicator
+    const typingId = appendTypingIndicator();
+
+    try {
+        const res = await fetch(`${API_BASE}/api/v1/chat`, {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({
+                message: text,
+                session_id: activeSessionId,
+                channel: "web",
+            }),
+        });
+
+        removeTypingIndicator(typingId);
+
+        if (!res.ok) {
+            appendChatMessage("assistant", "⚠️ Error processing question. Please try again.");
+            return;
+        }
+
+        const data = await res.json();
+        appendChatMessage("assistant", data.response, data.tools_called, data.latency_ms);
+    } catch (e) {
+        removeTypingIndicator(typingId);
+        appendChatMessage("assistant", `⚠️ Network error: ${e.message}`);
+    }
+}
+
+function appendChatMessage(role, content, tools = [], latency = null) {
+    const container = document.getElementById("chat-messages-container");
+    if (!container) return;
+
+    const div = document.createElement("div");
+    div.className = `flex flex-col ${role === "user" ? "items-end" : "items-start"} mb-4`;
+
+    const formattedContent = content
+        .replace(/\*\*(.*?)\*\*/g, "<strong>$1</strong>")
+        .replace(/\*(.*?)\*/g, "<em>$1</em>")
+        .replace(/\n/g, "<br/>");
+
+    const toolsBadge = (tools && tools.length > 0)
+        ? `<div class="mt-2 text-[10px] text-gray-400 flex flex-wrap gap-1">
+             <span class="text-gray-500">Tools:</span>
+             ${tools.map(t => `<span class="px-1.5 py-0.5 bg-gray-800 rounded border border-gray-700">${t}</span>`).join("")}
+             ${latency ? `<span class="text-blue-400 font-mono">(${latency}ms)</span>` : ''}
+           </div>`
+        : '';
+
+    div.innerHTML = `
+        <div class="max-w-[85%] md:max-w-[75%] p-3.5 ${role === "user" ? "chat-user text-white" : "chat-assistant text-gray-200"}">
+            <div class="text-sm leading-relaxed">${formattedContent}</div>
+            ${toolsBadge}
+        </div>
+        <span class="text-[10px] text-gray-500 mt-1 px-1">${role === 'user' ? 'You' : 'Live Quant Brain'}</span>
+    `;
+
+    container.appendChild(div);
+    container.scrollTop = container.scrollHeight;
+}
+
+function appendTypingIndicator() {
+    const container = document.getElementById("chat-messages-container");
+    if (!container) return null;
+
+    const id = "typing_" + Date.now();
+    const div = document.createElement("div");
+    div.id = id;
+    div.className = "flex flex-col items-start mb-4";
+    div.innerHTML = `
+        <div class="chat-assistant p-3 rounded-xl flex items-center space-x-1.5">
+            <span class="w-2 h-2 bg-blue-400 rounded-full animate-bounce"></span>
+            <span class="w-2 h-2 bg-blue-400 rounded-full animate-bounce [animation-delay:0.2s]"></span>
+            <span class="w-2 h-2 bg-blue-400 rounded-full animate-bounce [animation-delay:0.4s]"></span>
+            <span class="text-xs text-gray-400 ml-2 font-mono">Quant Brain analyzing...</span>
+        </div>
+    `;
+    container.appendChild(div);
+    container.scrollTop = container.scrollHeight;
+    return id;
+}
+
+function removeTypingIndicator(id) {
+    if (!id) return;
+    const el = document.getElementById(id);
+    if (el) el.remove();
+}
+
+// --- Watchlist ---
+async function initWatchlist() {
+    loadWatchlist();
+    const addBtn = document.getElementById("add-watchlist-btn");
+    const input = document.getElementById("add-watchlist-input");
+
+    if (addBtn && input) {
+        addBtn.addEventListener("click", async () => {
+            const sym = input.value.trim().toUpperCase();
+            if (!sym) return;
+            await fetch(`${API_BASE}/api/v1/market/watchlist`, {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({ symbol: sym }),
+            });
+            input.value = "";
+            loadWatchlist();
+        });
+    }
+}
+
+async function loadWatchlist() {
+    try {
+        const res = await fetch(`${API_BASE}/api/v1/market/watchlist`);
+        if (!res.ok) return;
+        const data = await res.json();
+        const container = document.getElementById("watchlist-table-body");
+        if (!container) return;
+
+        container.innerHTML = (data.watchlist || []).map(item => {
+            const isUp = (item.change_pct || 0) >= 0;
+            const sign = isUp ? "+" : "";
+            const colorClass = isUp ? "text-emerald-400" : "text-rose-400";
+            return `
+                <tr class="border-b border-gray-800 hover:bg-gray-800/40 cursor-pointer" onclick="selectInstrument('${item.symbol}')">
+                    <td class="py-3 px-4 font-bold text-white">${item.symbol}</td>
+                    <td class="py-3 px-4 font-mono">${item.price || 'N/A'} ${item.currency || ''}</td>
+                    <td class="py-3 px-4 font-mono ${colorClass}">${sign}${item.change_pct || 0}%</td>
+                    <td class="py-3 px-4 text-xs text-gray-400">${item.freshness?.status || 'CONNECTED'}</td>
+                    <td class="py-3 px-4 text-right">
+                        <button class="text-rose-400 hover:text-rose-300 text-xs px-2 py-1 rounded"
+                                onclick="event.stopPropagation(); removeFromWatchlist('${item.symbol}')">
+                            Remove
+                        </button>
+                    </td>
+                </tr>
+            `;
+        }).join("");
+    } catch (e) {
+        console.error("Failed to load watchlist:", e);
+    }
+}
+
+async function removeFromWatchlist(symbol) {
+    await fetch(`${API_BASE}/api/v1/market/watchlist/${symbol}`, { method: "DELETE" });
+    loadWatchlist();
+}
+
+// --- Connections & Health ---
+async function loadConnections() {
+    try {
+        const res = await fetch(`${API_BASE}/api/v1/connections`);
+        if (!res.ok) return;
+        const data = await res.json();
+
+        // Render MCP tools table
+        const mcpTable = document.getElementById("mcp-tools-table");
+        if (mcpTable) {
+            mcpTable.innerHTML = (data.mcp_tools?.tools || []).map(t => `
+                <tr class="border-b border-gray-800 text-xs">
+                    <td class="py-2.5 px-3 font-mono text-blue-400 font-semibold">${t.name}</td>
+                    <td class="py-2.5 px-3 text-gray-300">${t.description}</td>
+                    <td class="py-2.5 px-3 text-center">
+                        <span class="px-2 py-0.5 rounded-full text-[10px] ${t.is_active ? 'bg-emerald-950 text-emerald-300 border border-emerald-800' : 'bg-gray-800 text-gray-400'}">
+                            ${t.is_active ? 'ACTIVE' : 'INACTIVE'}
+                        </span>
+                    </td>
+                    <td class="py-2.5 px-3 font-mono text-right text-gray-300">${t.total_calls}</td>
+                    <td class="py-2.5 px-3 font-mono text-right text-gray-400">${t.last_latency_ms}ms</td>
+                </tr>
+            `).join("");
+        }
+
+        // Telegram status
+        const tgEl = document.getElementById("tg-status-desc");
+        if (tgEl) tgEl.innerText = data.telegram?.status || "Unknown";
+
+        // Market data status
+        const mdEl = document.getElementById("md-status-desc");
+        if (mdEl) mdEl.innerText = `${data.market_data?.primary_provider || 'Connected'} (${data.market_data?.status || 'OK'})`;
+
+        // TradingView status
+        const tvEl = document.getElementById("tv-status-desc");
+        if (tvEl) tvEl.innerText = `Webhook active on ${data.tradingview?.webhook_endpoint || '/webhook'}`;
+
+        // AI Engine
+        const aiEl = document.getElementById("ai-status-desc");
+        if (aiEl) aiEl.innerText = `Provider: ${data.ai_engine?.provider} (Model: ${data.ai_engine?.model || 'Deterministic'})`;
+    } catch (e) {
+        console.error("Failed to load connections:", e);
+    }
+}
+
+async function loadHealth() {
+    try {
+        const res = await fetch(`${API_BASE}/api/v1/health`);
+        if (!res.ok) return;
+        const h = await res.json();
+
+        const badge = document.getElementById("system-health-badge");
+        if (badge) {
+            badge.innerText = h.status;
+            badge.className = h.status === "HEALTHY"
+                ? "text-xs px-2.5 py-1 rounded-full bg-emerald-950 text-emerald-300 border border-emerald-800 flex items-center space-x-1"
+                : "text-xs px-2.5 py-1 rounded-full bg-amber-950 text-amber-300 border border-amber-800 flex items-center space-x-1";
+        }
+
+        const uptimeEl = document.getElementById("uptime-stat");
+        if (uptimeEl) {
+            const hrs = Math.floor(h.uptime_seconds / 3600);
+            const mins = Math.floor((h.uptime_seconds % 3600) / 60);
+            const secs = Math.floor(h.uptime_seconds % 60);
+            uptimeEl.innerText = `${hrs}h ${mins}m ${secs}s`;
+        }
+
+        const memEl = document.getElementById("memory-stat");
+        if (memEl) memEl.innerText = `${h.memory_usage_mb} MB`;
+    } catch (e) {
+        console.error("Failed to load health:", e);
+    }
+}

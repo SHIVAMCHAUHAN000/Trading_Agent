@@ -62,12 +62,24 @@ def create_app() -> FastAPI:
     if FRONTEND_DIR.exists():
         app.mount("/static", StaticFiles(directory=str(FRONTEND_DIR)), name="static")
 
-        @app.get("/")
-        async def serve_index():
-            index_path = FRONTEND_DIR / "index.html"
-            if index_path.exists():
-                return FileResponse(str(index_path))
-            return {"message": f"{settings.APP_NAME} API Online"}
+    @app.get("/")
+    async def serve_index():
+        # Check frontend/index.html first, then public/index.html
+        index_path = FRONTEND_DIR / "index.html"
+        if not index_path.exists():
+            public_index = FRONTEND_DIR.parent / "public" / "index.html"
+            if public_index.exists():
+                index_path = public_index
+
+        if index_path.exists():
+            return FileResponse(str(index_path))
+        return {
+            "status": "ONLINE",
+            "app_name": settings.APP_NAME,
+            "version": settings.APP_VERSION,
+            "docs_url": "/docs",
+            "health_url": "/health",
+        }
 
     return app
 
